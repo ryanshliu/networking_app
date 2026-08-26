@@ -32,6 +32,10 @@
             --emerald-border: #d1fae5;
             --emerald-text: #047857;
 
+            --violet-bg: #f5f3ff;
+            --violet-border: #ddd6fe;
+            --violet-text: #6d28d9;
+
             --bubble-a-bg: #ffffff;
             --bubble-a-border: #cbd5e1;
             --bubble-a-text: #0f172a;
@@ -40,11 +44,9 @@
             --bubble-b-border: #c7d2fe;
             --bubble-b-text: #1e1b4b;
 
-            /* 預設手機寬度 (最大 460px) */
             --app-max-width: 460px;
         }
 
-        /* 平板與電腦大螢幕版面寬度控制 (統一居中 680px，徹底解決滿版變形) */
         @media (min-width: 640px) {
             :root {
                 --app-max-width: 680px;
@@ -80,7 +82,6 @@
             color: var(--text-body);
         }
 
-        /* 全域統一容器：確保所有元件嚴格對齊 */
         .app-layout {
             width: 100%;
             max-width: var(--app-max-width);
@@ -186,6 +187,7 @@
         .tag-amber { background-color: var(--amber-bg); color: var(--amber-text); border: 1px solid var(--amber-border); }
         .tag-sky { background-color: var(--sky-bg); color: var(--sky-text); border: 1px solid var(--sky-border); }
         .tag-emerald { background-color: var(--emerald-bg); color: var(--emerald-text); border: 1px solid var(--emerald-border); }
+        .tag-violet { background-color: var(--violet-bg); color: var(--violet-text); border: 1px solid var(--violet-border); }
 
         .block-desc { font-size: 15.5px; color: var(--text-body); line-height: 1.65; margin: 0; white-space: pre-line; }
 
@@ -236,6 +238,41 @@
         }
         .vocab-ul li { margin-bottom: 7px; }
 
+        /* 練習題卡片樣式 */
+        .quiz-card {
+            background-color: #faf5ff;
+            border: 1.5px solid #e9d5ff;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+        .quiz-q {
+            font-size: 15.5px; font-weight: 700; color: #581c87; line-height: 1.5; margin-bottom: 8px;
+        }
+        .quiz-toggle-btn {
+            background-color: #7e22ce; color: #ffffff; border: none; padding: 6px 14px;
+            border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .quiz-toggle-btn:active { transform: scale(0.96); }
+        .quiz-ans {
+            display: none; margin-top: 10px; padding: 10px 12px; background: #ffffff;
+            border-radius: 10px; font-size: 15px; color: #15803d; font-weight: 600;
+            line-height: 1.55; white-space: pre-line; border-left: 3px solid #16a34a;
+        }
+
+        /* 下週延續任務專用方框 */
+        .task-box {
+            background-color: var(--violet-bg);
+            border: 1.5px solid var(--violet-border);
+            border-radius: 14px;
+            padding: 14px;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #4c1d95;
+            font-weight: 600;
+        }
+
         .link-box { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border-color); text-align: left; }
         .link-btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; box-sizing: border-box;
@@ -258,7 +295,6 @@
 </head>
 <body>
 
-    <!-- 全域置中佈局容器 -->
     <div class="app-layout">
         <div id="updateNotice" onclick="forceReloadApp()">
             ✨ 發現最新教材版本，點此立即更新！
@@ -266,7 +302,8 @@
 
         <div class="header">
             <h1>Networking English</h1>
-            <div class="author-badge">By Ryan Liu, V1.1</div>
+            <!-- 版本號設定為 V1.0 -->
+            <div class="author-badge">By Ryan Liu, V1.0</div>
             
             <div class="pen-toolbar">
                 <button id="penBtn" class="tool-btn" onclick="togglePenMode()">
@@ -313,9 +350,21 @@
                         <div id="mainContentContainer"></div>
                     </div>
 
+                    <!-- 句型練習題區塊 -->
+                    <div class="block-section" id="quizSection">
+                        <div class="tag-title tag-violet">✍️ 實戰練習與自我檢測</div>
+                        <div id="quizContainer"></div>
+                    </div>
+
                     <div class="block-section" id="vocabSection">
                         <div class="tag-title tag-emerald">📝 重點單字與注意事項</div>
                         <ul class="vocab-ul" id="vocabDisplay"></ul>
+                    </div>
+
+                    <!-- 下週課堂延續示範任務區塊 -->
+                    <div class="block-section" id="taskSection">
+                        <div class="tag-title tag-violet">🎯 下週課堂延續示範任務</div>
+                        <div id="taskContainer" class="task-box"></div>
                     </div>
                 </div>
 
@@ -332,8 +381,8 @@
     </div>
 
     <script>
-        const LOCAL_APP_VERSION = "2026-08-26 15:50:42";
-        const rawDatabase = [{"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "社交問候 (Greetings)", "title": "打招呼與近況寒暄 (Greetings & Responses)", "key_takeaways": "1. 熟人與同事間的自然問候：優先使用 Hey there! 或 How’s it going?。\n2. 描述近況平淡無波折時：避免只說 I'm fine，使用 Same old, same old 或 The usual 更在地自然。", "main_content": "• 自然問候 (Informal Greetings)：\n  - Hey there!\n  - How’s it going?\n  - How are things (with you)?\n\n• 描述近況平穩 (Neutral Responses)：\n  - Same old, same old!\n  - The usual. / Pretty much the same.\n  - (Pretty) uneventful. / Nothing special.", "vocab_notes": ["Same old, same old：高頻口語，表達工作或生活一切照舊、沒太大變化。", "Uneventful：形容詞，指平靜無事的、沒有重大事件發生的。", "How have you been?：現在完成式，用於詢問自上次見面以來的近況。", "Can't complain：挺好的、沒什麼好挑剔的，相當於 Not bad 或 Pretty good。", "Pretty much the same：幾乎跟平常一模一樣，常用於回答 How are things?。", "文化要點：英美商務社交中，問候多屬於禮貌開場，回應簡短正面即可。", "Catch up：與久未見面的朋友或同事交流近況。"], "link": "https://www.linkedin.com/pulse/18-ways-say-hello-english-thomas-spengler/", "link_text": "18 Ways to Say Hello in English"}, {"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "道別用語 (Goodbyes)", "title": "道別與重要文法規則 (Ways to Say Goodbye & Grammar)", "key_takeaways": "Pro Tip 文法核心：Look forward to 中的 to 是介系詞，後面必須接動名詞 (V-ing) 或名詞，絕不可接原形動詞！\n✔ 正確：I look forward to seeing you in Kaohsiung.\n✖ 錯誤：I look forward to see you.", "main_content": "• 非正式道別 (Informal Goodbyes)：\n  - I’ve got to get going! (= I have to leave now)\n  - Take it easy! / Have a good one!\n  - I’m off!\n\n• 正式商務道別 (Formal Goodbyes)：\n  - It was nice meeting you. / It was a pleasure to see you。\n  - I look forward to our next meeting!\n  - I look forward to seeing you soon。", "vocab_notes": ["I've got to (= I have to / I need to)：口語中常縮讀為 I gotta。", "Have a good one：美式極常見祝福語，one 可泛指 day, weekend 或 evening。", "Take it easy：道別時使用，相當於保重、放輕鬆。", "I'm off：簡短口語，表示我先離開、我先走一步了。", "Look forward to + V-ing：商務書信與會面結尾最標準的期待相會用語。", "Pleasure meeting you：初次見面道別用 meeting；若非初次見面則用 Pleasure seeing you。", "See you around：回頭見、下次見，適用於常碰面的同棟辦公室同事。"], "link": "https://www.berlitz.com/blog/goodbye-english", "link_text": "81 Ways to Say Goodbye in English"}, {"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "展會社交 (Trade Fair)", "title": "展會破冰與邀約 (Small Talk At a Conference)", "key_takeaways": "展會社交四部曲心法：\n1. 詢問抵達與交通 ➔ 2. 詢問住宿評價與距離 ➔ 3. 交流攤位心得 ➔ 4. 提出社交邀約 (Happy Hour)。", "main_content": "A: When did you arrive?\nB: I flew here yesterday. And you?\nA: I got here 2 days ago. Where are you staying?\nB: At the Mason Park Hotel。\nA: That’s where I am! Do you like the hotel?\nB: It’s okay. The room is small, but comfortable, and it’s a 5-minute walk to the venue。\nA: What do you think of the trade fair?\nB: I like some of the exhibitor’s stands, and I plan to join the happy hour tomorrow at 5pm. Would you like to come?\nA: Why not? Count me in!", "vocab_notes": ["Trade fair：商務展覽會、貿易展。", "Exhibitor's stand：參展商攤位（美式常稱 booth）。", "Within walking distance：步行即可達到的範圍。", "Count me in!：口語高頻片語，表示算我一份、我也要參加。", "Why not?：在此並非反問，而是表示贊同、好啊、何樂不為。", "Happy hour：展會結束後的非正式飲酒社交時段，破冰關鍵場合。", "Fly in / Fly here：搭乘飛機前來，商務出差常見動詞用法。", "Venue：大會活動或展覽舉辦的指定場地。"], "link": "", "link_text": ""}, {"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "職場英語 (Workplace)", "title": "職場核心表達與行程衝突 (Useful Workplace Phrases)", "key_takeaways": "職場商務溝通核心：精準表達職能特長、跨部門人際相處，以及面對會議撞期時的專業應對。", "main_content": "• 專業特質與人際相處：\n  - This job is an ideal match for my skills and experience。\n  - I get on with people easily. (= I get along with people well)\n\n• 行程衝突與時間管理：\n  - I’ve got two meetings scheduled at the same time. (= I’m double-booked.)\n  - I can’t do them both at once! (= I have a scheduling conflict.)\n\n• 決策權限說明：\n  - The decision is in the hands of the manager。", "vocab_notes": ["Ideal match：理想搭配、完美契合的人選。", "Get on with：英式片語，等同於美式 get along with (與人相處融洽)。", "Double-booked：同一時間被重複安排了兩項會議行程。", "Scheduling conflict：時間安排上的衝突、衝堂。", "In the hands of：掌握在...手中、由...作決定。", "Interpersonal skills：人際溝通能力 (= people skills)。", "Apart from：除了...之外 (except / other than)。", "Timetable：時間表、議程表。"], "link": "https://www.bbc.co.uk/learningenglish/features/english-at-work/english-at-work-intro", "link_text": "BBC English at Work 介紹頁面"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "影音學習 (Video Study)", "title": "商務社交情境：巴黎會面 (Business Partner A2 5.4.1)", "key_takeaways": "【詳細劇情情境摘要】\nJulia 抵達巴黎參加商務研討會，與合作夥伴 Maria 和 Max 會面。對話圍繞著抵達的交通方式、入住飯店品質展開。Max 提及雖然飯店房間不大，但勝在舒適且離展場步行僅需幾分鐘。最後三人順勢敲定當晚的晚餐邀約。\n\n【觀看與學習重點】\n1. 聽辨關鍵資訊：何時抵達？搭乘何種交通工具？對住宿的真實評價是什麼？\n2. 觀察非語言肢體溝通 (Body Language)：\n   - Roll one's eyes (翻白眼：表達無奈或不置可否)\n   - Make a face (做鬼臉/撇嘴：表達不滿意或嫌棄)\n   - Wink (眨眼暗示)\n3. 學習如何在對話結束前自然促成後續晚餐邀約 (Dinner plan)。", "main_content": "• When did you arrive? / How did she get there?\n• Did Max like the hotel he was staying? (The room is small, but comfortable)\n• What was their dinner plan?", "vocab_notes": ["Socialize with clients：與客戶建立社交關係、商務應酬。", "Make a face：做出不悅、嫌棄或無奈的面部表情。", "Roll one's eyes：翻白眼，表示不認同或受不了。", "Wink：眨眼示意，用於默契或幽默玩笑場合。", "Catch up with：與久未見面的人更新彼此近況。", "Dinner arrangement：晚餐安排與餐廳預訂。", "Body language：肢體語言在跨文化商務溝通中的關鍵作用。"], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/Bus_Part_A2_U5L4_5.4.1.mp4", "link_text": "觀看 Business Partner 5.4.1 影片 (MP4)"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "聽力學習 (Audio Study)", "title": "展館心得與產品發表聽力 (BP A2 Workbook 5.5)", "key_takeaways": "【詳細對話摘要】\nAmy 與 Marta 在展會現場交流彼此抵達展場的日期與參觀心得。Amy 分享了對展覽中心硬體設施的正面評價，並預告隔天自家公司將舉辦新產品發表會；隨後 Victor 加入討論，三人針對『資源回收 (Recycling)』專題演講交流意見，並客觀比較今年會議飯店在房間空間、交通距離與餐飲品質上的優缺點。\n\n【聽力核心檢測任務】\n1. Amy 和 Marta 是否同一天抵達？（留意各自抵達時間差距）\n2. Marta 是否會參加隔天 Amy 公司舉辦的新產品發表會？\n3. Victor 與 Amy 對於今年飯店大小與食物水準的看法是否一致？", "main_content": "• Conference center facilities (會議中心硬體設施)\n• Product launch presentation (新產品發表會)\n• Presentation on recycling (環保資源回收簡報)", "vocab_notes": ["Conference hotel：大會指定特約飯店。", "Level of comfort：舒適度水準。", "Product launch：新產品上市發布。", "Recycling presentation：資源回收專題簡報。", "Facility / Venue：場地與周邊設施。", "Attendee / Exhibitor：與會者 / 參展商。", "Audio comprehension：商務聽力理解練習。"], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/BP_A2_WB_5_05.mp3", "link_text": "收聽 BP A2 5.5 練習音檔 (MP3)"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "自學任務 (Self-Study)", "title": "拒絕制式回答：替代 'I’m fine, thank you' (Papa Teach Me)", "key_takeaways": "【影片核心內容摘要】\n知名英語教學頻道 Papa Teach Me 深入探討母語人士在日常社交中如何依據真實心境提供靈活、道地的回覆，徹底擺脫死板的 'I'm fine, thank you'；同時傳授如何敏銳觀察對方面色並給予合適的關懷問候。\n\n【自學任務清單】\n✔ 任務 1：掌握至少 15 種回答 'How are you?' 的替換說法。\n✔ 任務 2：當對方看起來氣色不佳、生病或心情低落時，熟記 5 種關心問句。", "main_content": "• 狀況極佳：Never better! / Couldn't be better!\n• 平淡日常：Can't complain. / Same old, same old. / The usual。\n• 關懷問句：Are you feeling alright? / You look a bit under the weather.", "vocab_notes": ["Can't complain：挺好的，沒什麼好挑剔的。", "A bit under the weather：身體微恙、略感不適（口語高頻慣用語）。", "Never better：再好不過了，表示個人狀態極佳。", "Couldn't be better：不能再更好了，最高級讚美。", "You look a bit down：你看起來有點沒精神/心情低落。", "Hang in there：撐著點、加油，用於安慰面臨壓力的人。", "Self-study task：課後自學訓練任務。"], "link": "https://www.youtube.com/watch?v=f259lQdMo2s", "link_text": "開啟 YouTube 教學影片 (14:18)"}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "走廊寒暄 (Catching Up)", "title": "巧遇寒暄與公務告退 (Catching up with Each Other)", "key_takeaways": "【課堂情境與學習重點】\n1. 在走廊、電梯口或課後偶遇時，進行自然簡短的 30 秒破冰寒暄。\n2. 當有緊急公務（如趕著交報告、開會）時，如何有禮貌且合情合理地向對方告退，並給予正面口語祝福。", "main_content": "A: Hi, [Name. How have you been?\nB: Things are good~ And how are things with you?\nA: Same old, same old。\nB: What are you doing after class?\nA: I’ve got to get back to work. I need to turn in a report by 5:30pm。\nB: Wow, ok. Good luck with that!\nA: Thanks! I really need it!", "vocab_notes": ["Turn in a report：繳交/呈報報告（turn in 同義於 submit 或 hand in）。", "Good luck with that!：祝你在那件事上順利！日常高頻口語祝福。", "Get back to work：回到工作崗位上繼續忙碌。", "Things are good：近況挺不錯的，口語輕鬆回答。", "Deadline / By [Time：截止時間，by 5:30pm 表示最晚在5點半前。", "I really need it：我真的很需要（這句祝福），幽默表達手頭工作確實繁重。", "Wrap up：結束、收尾手邊工作。"], "link": "", "link_text": ""}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "差旅交通 (Accommodation)", "title": "研討會住宿與地鐵動線描述 (AIChE Minneapolis)", "key_takeaways": "【課堂情境與學習重點】\n1. 商務差旅中（以赴美參加 AIChE 2026 年會為例）精確描述飯店距離、步行時間、地鐵直達與免轉乘動線。\n2. 詢問與說明房價預算、掌握明尼阿波利斯 Skyway 空中步道系統在防寒與通行上的優勢。", "main_content": "• 距離與位置描述：\n  - The hotel is near / close to the subway station。\n  - The subway station is within walking distance. (= It’s a 5-minute walk to the station.)\n\n• 交通動線與直達：\n  - From the hotel, I can take the subway directly to the conference venue。\n  - I don’t need to transfer。\n\n• 房價說明：\n  - I have no idea about their room price.", "vocab_notes": ["Within walking distance：步行可達的距離（商務出差選飯店首要考量）。", "Directly：副詞，直達地、直接地。", "Transfer：動詞/名詞，轉乘、換線。", "Have no idea about...：對...完全不清楚、毫不知情。", "Single room rate：單人房每晚房價。", "Skyway system：空中連通步道系統（如明尼阿波利斯著名防寒通道）。", "Venue：大會活動或展覽舉辦的指定會場。", "Proximity：鄰近程度、距離接近。"], "link": "https://minneapolis-2021.s3.amazonaws.com/images/2024_SkywayMap_Digital.pdf?v=1726683206", "link_text": "Minneapolis Skyway & Hotel Map"}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "在地推薦 (Recommendations)", "title": "會後在地景點與美食推薦 (Post-conference Recommendations)", "key_takeaways": "【課堂情境與學習重點】\n1. 向外國訪客介紹台灣在地景點（如高雄景點與特色小吃）的高階推薦句型。\n2. ★ 重要文法核心：worth (值得) 後方必須接動名詞『V-ing』！（例：is worth visiting / eating）。\n3. 提醒外國友人避開觀光陷阱與敲竹槓店家（Tourist trap / Rip-off）。", "main_content": "• 推薦原因句型：\n  - I recommend [Place/Food because [Reason。\n  - I think [Place/Food is worth seeing/visiting/eating, as it [Reason。\n\n• 最高評價句型：\n  - [Place/Food is my all-time favorite. It’s a must-see / must-eat / must-do here in Kaohsiung。\n  - You simply can’t miss [Place/Food. It’s a once-in-a-lifetime experience!", "vocab_notes": ["All-time favorite：一直以來的最愛、終極最愛。", "Must-see / Must-eat：必看景點 / 必吃美食（名詞用法）。", "Tourist trap：專門敲觀光客竹槓的黑店或名不副實的景點。", "Rip-off (n./v.)：敲竹槓、暴利商品；That guava cost NT$500? It’s a rip-off!", "Fusion restaurant：創意融合料理、跨國界風味餐廳。", "Bed and breakfast (B&B)：民宿、提供床位與早餐的旅宿。", "Food court：百貨公司或商場的美食街。", "Once-in-a-lifetime：一生一次、絕無僅有的難得體驗。", "Local specialty：在地特色名產/小吃。"], "link": "", "link_text": ""}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "商務人脈 (Networking)", "title": "展會破冰與部門職掌交流 (Networking Role-Play)", "key_takeaways": "【課堂情境與學習重點】\n商務人脈拓展（Networking）標準五部曲：\n禮貌自我介紹 ➔ 詢問對方部門業務 ➔ 簡介自己部門職掌 ➔ 主動提出能為對方提供協助或解決問題 ➔ 交換名片約定後續跟進。", "main_content": "A: Hello, I’m [Name. I work as a [Title in [Dept。\nB: Hi, I’m [Name. It’s a pleasure to meet you。\nA: Can you tell me about your department?\nB: Sure! We [Responsibilities。\nA: Can I briefly tell you about what our department does?\nB: Of course! I’m all ears. / Fire away!\nA: We [Our work. I think we might be able to help you。\nB: That would be great! / It’s so nice of you to offer help。\nA: Here's my business card should you want to call。\nB: Absolutely. I’ll be in touch / I'll give you a call soon。", "vocab_notes": ["Fire away!：口語片語，表示請說吧、開始問吧。", "I'm all ears：我洗耳恭聽、全神貫注在聽。", "Offer help：主動提出協助。", "I'll be in touch：我會再與您保持聯絡。", "Business card：名片；Here's my business card 這是我的名片。", "Briefly explain：簡明扼要地說明、簡述。", "Encounter a problem：在工作上遭遇問題或挑戰。", "Follow-up：後續跟進聯絡與業務推進。"], "link": "", "link_text": ""}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "BBC 職場英語 (BBC Networking)", "title": "商務社交實戰：Tip Top Trading (BBC #48 Face-to-face)", "key_takeaways": "【詳細劇情情境摘要】\nTip Top Trading 的員工參加產業大會。Anna 必須在會場與同業積極拓展人脈（Networking）。同時公司正面臨嚴峻的經濟景氣（Tough economic climate），管理階層面臨裁員縮編壓力（Reduce team / be rid of staff）。Anna 必須把握展會機會展現熱情，積極爭取新商機。\n\n【Networking 社交心法與觀看重點】\n1. 核心精神：Networking 是透過結識同業建立連結、分享資訊並為公司爭取新業務。\n2. 社交心態：保持友善熱絡 (Just be chatty and friendly)。\n3. 破冰技巧：主動自我介紹 ➔ 詢問對方需求並簡介業務 ➔ 交換名片約定後續聯繫。", "main_content": "• Do some networking = do some schmoozing (建立人脈 / 社交應酬)\n• I’ll give it a try. = I’ll give it a shot. (我來試試看)\n• Let’s get down to business. (讓我們切入正題談公事)\n• It's a tough economic climate. (這是個嚴峻的經濟景氣)\n• Here's my business card should you want to call。", "vocab_notes": ["Schmooze (v.)：社交應酬、拉攏關係、建立人脈。", "Be rid of：擺脫、裁減（員工）。", "Prestigious award：享有盛望的大獎。", "Give it a shot：嘗試一下（口語高頻同義詞 give it a try）。", "Tough economic climate：艱困的經濟大環境。", "Sort this out：解決這項難題、處理好這件事。", "Promote business：推廣公司業務與產品。", "In your hands：掌握在你的責任範圍內。"], "link": "https://www.bbc.co.uk/learningenglish/features/english-at-work/48-language-for-networking", "link_text": "前往 BBC 課程網頁 (收聽音檔與劇本)"}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "自學任務 (Self-Study)", "title": "Passkey 通行密鑰原理 (BBC News 02:35)", "key_takeaways": "【影片詳細摘要】\nBBC News 深入探討 Passkey（通行密鑰）技術如何透過裝置端生物辨識（指紋/FaceID）取代傳統容易被駭、外洩或遺忘的字元密碼，成為新一代跨平台網路安全驗證標準。\n\n【課後自學任務 Tasks】\n✔ 任務：觀看影片後，用 1-3 句英文簡述 Passkey 相比傳統密碼最大的安全性優勢。", "main_content": "• Passkey (通行密鑰)\n• Online security & Authentication (網路安全與身分驗證)\n• Biometrics (生物辨識技術：Touch ID / Face ID)\n• Passwordless future (無密碼化趨勢)", "vocab_notes": ["Authentication：身分驗證、認證流程。", "Biometrics：生物辨識技術（如指紋、臉部辨識）。", "Data encryption：資料加密傳輸技術。", "Cybersecurity threat：資訊安全威脅與釣魚網站防護。"], "link": "https://www.youtube.com/watch?v=lf5L_1oqHDs", "link_text": "開啟 BBC Passkey 影片 (02:35)"}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "自學任務 (Self-Study)", "title": "智慧眼鏡防偷拍妙招 (CNN Shorts 02:15)", "key_takeaways": "【影片詳細情境摘要】\nCNN 報導網路上流傳一項應對智慧眼鏡（如 Meta Ray-Ban）未經同意偷拍的新招數：如果你懷疑身邊有人正配戴智慧眼鏡對你進行錄影，可以在現場播放或哼唱『迪士尼版權歌曲』！因為社群平台的演算法與版權偵測技術會自動識別受版權保護的音訊，一旦對方將偷拍影片上傳至社群平台，該影片很可能會直接被系統下架或消音。Meta 同時向 CNN 表示已在 AI 智慧眼鏡鏡框上內建 LED 隱私提示燈，並嚴肅看待未經同意的偷拍行為。\n\n【課後自學任務 Tasks】\n✔ 任務：記住關於隱私隱憂、拍攝與版權偵測相關的英文詞彙。", "main_content": "• Smart glasses & Being filmed (智慧眼鏡與正在被錄影)\n• Privacy concern & Filming without consent (隱私隱憂與未經同意拍攝)\n• Copyrighted song & Detection technology (版權歌曲與偵測下架技術)\n• LED indicator light (鏡框拍攝提示指示燈)", "vocab_notes": ["Film without consent：未經同意擅自錄影/拍攝。", "Privacy concern：個人隱私隱憂與防範。", "Copyrighted content：受智慧財產權保護的內容。", "Detection technology：自動偵測辨識技術。", "Indicator light：LED 拍攝提示燈號。", "Take something seriously：嚴肅重視某項議題。"], "link": "https://youtube.com/shorts/H7qyXwntx08?si=zc6OtSPaJOuWMik9", "link_text": "開啟 CNN Smart Glasses 短片 (02:15)"}];
+        const LOCAL_APP_VERSION = "2026-08-26 16:06:54";
+        const rawDatabase = [{"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "社交問候 (Greetings)", "title": "打招呼與近況寒暄 (Greetings & Responses)", "key_takeaways": "1. 熟人與同事間的自然問候：優先使用 Hey there! 或 How’s it going?。\n2. 描述近況平淡無波折時：避免只說 I'm fine，使用 Same old, same old 或 The usual 更在地自然。", "main_content": "• 自然問候 (Informal Greetings)：\n  - Hey there!\n  - How’s it going?\n  - How are things (with you)?\n\n• 描述近況平穩 (Neutral Responses)：\n  - Same old, same old!\n  - The usual. / Pretty much the same.\n  - (Pretty) uneventful. / Nothing special.", "vocab_notes": ["Same old, same old：高頻口語，表達工作或生活一切照舊、沒太大變化。", "Uneventful：形容詞，指平靜無事的、沒有重大事件發生的。", "How have you been?：現在完成式，用於詢問自上次見面以來的近況。", "Can't complain：挺好的、沒什麼好挑剔的，相當於 Not bad 或 Pretty good。", "Pretty much the same：幾乎跟平常一模一樣，常用於回答 How are things?。", "文化要點：英美商務社交中，問候多屬於禮貌開場，回應簡短正面即可。", "Catch up：與久未見面的朋友或同事交流近況。"], "practice_quiz": [{"question": "【填空練習】同事在走廊問你 'How are things with you?'，若最近工作一切如常平淡，你想表達「老樣子」可以怎麼回答？", "answer": "✔ 參考答案：\n1. Same old, same old!\n2. The usual.\n3. Pretty much the same.\n4. (Pretty) uneventful. Nothing special."}], "link": "https://www.linkedin.com/pulse/18-ways-say-hello-english-thomas-spengler/", "link_text": "18 Ways to Say Hello in English"}, {"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "道別用語 (Goodbyes)", "title": "道別與重要文法規則 (Ways to Say Goodbye & Grammar)", "key_takeaways": "Pro Tip 文法核心：Look forward to 中的 to 是介系詞，後面必須接動名詞 (V-ing) 或名詞，絕不可接原形動詞！\n✔ 正確：I look forward to seeing you in Kaohsiung.\n✖ 錯誤：I look forward to see you.", "main_content": "• 非正式道別 (Informal Goodbyes)：\n  - I’ve got to get going! (= I have to leave now)\n  - Take it easy! / Have a good one!\n  - I’m off!\n\n• 正式商務道別 (Formal Goodbyes)：\n  - It was nice meeting you. / It was a pleasure to see you。\n  - I look forward to our next meeting!\n  - I look forward to seeing you soon。", "vocab_notes": ["I've got to (= I have to / I need to)：口語中常縮讀為 I gotta。", "Have a good one：美式極常見祝福語，one 可泛指 day, weekend 或 evening。", "Take it easy：道別時使用，相當於保重、放輕鬆。", "I'm off：簡短口語，表示我先離開、我先走一步了。", "Look forward to + V-ing：商務書信與會面結尾最標準的期待相會用語。", "Pleasure meeting you：初次見面道別用 meeting；若非初次見面則用 Pleasure seeing you。", "See you around：回頭見、下次見，適用於常碰面的同棟辦公室同事。"], "practice_quiz": [{"question": "【文法挑錯】請修正以下句子：'I look forward to meet you at the Taipei office next week.'", "answer": "✔ 錯誤修正：\n將 meet 改為 meeting。\n👉 正確句子：I look forward to meeting you at the Taipei office next week. (因為 to 是介系詞，後方接 V-ing)"}], "link": "https://www.berlitz.com/blog/goodbye-english", "link_text": "81 Ways to Say Goodbye in English"}, {"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "展會社交 (Trade Fair)", "title": "展會破冰與邀約 (Small Talk At a Conference)", "key_takeaways": "展會社交四部曲心法：\n1. 詢問抵達與交通 ➔ 2. 詢問住宿評價與距離 ➔ 3. 交流攤位心得 ➔ 4. 提出社交邀約 (Happy Hour)。", "main_content": "A: When did you arrive?\nB: I flew here yesterday. And you?\nA: I got here 2 days ago. Where are you staying?\nB: At the Mason Park Hotel。\nA: That’s where I am! Do you like the hotel?\nB: It’s okay. The room is small, but comfortable, and it’s a 5-minute walk to the venue。\nA: What do you think of the trade fair?\nB: I like some of the exhibitor’s stands, and I plan to join the happy hour tomorrow at 5pm. Would you like to come?\nA: Why not? Count me in!", "vocab_notes": ["Trade fair：商務展覽會、貿易展。", "Exhibitor's stand：參展商攤位（美式常稱 booth）。", "Within walking distance：步行即可達到的範圍。", "Count me in!：口語高頻片語，表示算我一份、我也要參加。", "Why not?：在此並非反問，而是表示贊同、好啊、何樂不為。", "Happy hour：展會結束後的非正式飲酒社交時段，破冰關鍵場合。", "Fly in / Fly here：搭乘飛機前來，商務出差常見動詞用法。", "Venue：大會活動或展覽舉辦的指定場地。"], "practice_quiz": [{"question": "【情境問答】對方在研討會邀請你：'We're grabbing drinks after the keynote, wanna join?'，你想熱情表示「算我一份！」，英文該如何回答？", "answer": "✔ 參考答案：\n👉 'Why not? Count me in!' 或 'Sure, I'd love to join!'"}], "link": "", "link_text": ""}, {"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "職場英語 (Workplace)", "title": "職場核心表達與行程衝突 (Useful Workplace Phrases)", "key_takeaways": "職場商務溝通核心：精準表達職能特長、跨部門人際相處，以及面對會議撞期時的專業應對。", "main_content": "• 專業特質與人際相處：\n  - This job is an ideal match for my skills and experience。\n  - I get on with people easily. (= I get along with people well)\n\n• 行程衝突與時間管理：\n  - I’ve got two meetings scheduled at the same time. (= I’m double-booked.)\n  - I can’t do them both at once! (= I have a scheduling conflict.)\n\n• 決策權限說明：\n  - The decision is in the hands of the manager。", "vocab_notes": ["Ideal match：理想搭配、完美契合的人選。", "Get on with：英式片語，等同於美式 get along with (與人相處融洽)。", "Double-booked：同一時間被重複安排了兩項會議行程。", "Scheduling conflict：時間安排上的衝突、衝堂。", "In the hands of：掌握在...手中、由...作決定。", "Interpersonal skills：人際溝通能力 (= people skills)。", "Apart from：除了...之外 (except / other than)。", "Timetable：時間表、議程表。"], "practice_quiz": [{"question": "【商務情境】秘書詢問你週五下午兩點能否加開專案會議，但該時段你已有既定會議，該如何專業回覆？", "answer": "✔ 參考答案：\n👉 'I'm afraid I'm double-booked at that time.' 或 'I have a scheduling conflict at 2 PM on Friday.'"}], "link": "https://www.bbc.co.uk/learningenglish/features/english-at-work/english-at-work-intro", "link_text": "BBC English at Work 介紹頁面"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "影音學習 (Video Study)", "title": "商務社交情境：巴黎會面 (Business Partner A2 5.4.1)", "key_takeaways": "【詳細劇情情境摘要】\nJulia 抵達巴黎參加商務研討會，與合作夥伴 Maria 和 Max 會面。對話圍繞著抵達的交通方式、入住飯店品質展開。Max 提及雖然飯店房間不大，但勝在舒適且離展場步行僅需幾分鐘。最後三人順勢敲定當晚的晚餐邀約。\n\n【觀看與學習重點】\n1. 聽辨關鍵資訊：何時抵達？搭乘何種交通工具？對住宿的真實評價是什麼？\n2. 觀察非語言肢體溝通 (Body Language)：\n   - Roll one's eyes (翻白眼：表達無奈或不置可否)\n   - Make a face (做鬼臉/撇嘴：表達不滿意或嫌棄)\n   - Wink (眨眼暗示)\n3. 學習如何在對話結束前自然促成後續晚餐邀約 (Dinner plan)。", "main_content": "• When did you arrive? / How did she get there?\n• Did Max like the hotel he was staying? (The room is small, but comfortable)\n• What was their dinner plan?", "vocab_notes": ["Socialize with clients：與客戶建立社交關係、商務應酬。", "Make a face：做出不悅、嫌棄或無奈的面部表情。", "Roll one's eyes：翻白眼，表示不認同或受不了。", "Wink：眨眼示意，用於默契或幽默玩笑場合。", "Catch up with：與久未見面的人更新彼此近況。", "Dinner arrangement：晚餐安排與餐廳預訂。", "Body language：肢體語言在跨文化商務溝通中的關鍵作用。"], "next_week_tasks": ["💡 課堂示範預告：老師下週會隨機請同學模擬巴黎會面情境（扮演 Julia, Maria 或 Max），請準備好 30 秒抵達交通與飯店評價對話。"], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/Bus_Part_A2_U5L4_5.4.1.mp4", "link_text": "觀看 Business Partner 5.4.1 影片 (MP4)"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "聽力學習 (Audio Study)", "title": "展館心得與產品發表聽力 (BP A2 Workbook 5.5)", "key_takeaways": "【詳細對話摘要】\nAmy 與 Marta 在展會現場交流彼此抵達展場的日期與參觀心得。Amy 分享了對展覽中心硬體設施的正面評價，並預告隔天自家公司將舉辦新產品發表會；隨後 Victor 加入討論，三人針對『資源回收 (Recycling)』專題演講交流意見，並客觀比較今年會議飯店在房間空間、交通距離與餐飲品質上的優缺點。\n\n【聽力核心檢測任務】\n1. Amy 和 Marta 是否同一天抵達？（留意各自抵達時間差距）\n2. Marta 是否會參加隔天 Amy 公司舉辦的新產品發表會？\n3. Victor 與 Amy 對於今年飯店大小與食物水準的看法是否一致？", "main_content": "• Conference center facilities (會議中心硬體設施)\n• Product launch presentation (新產品發表會)\n• Presentation on recycling (環保資源回收簡報)", "vocab_notes": ["Conference hotel：大會指定特約飯店。", "Level of comfort：舒適度水準。", "Product launch：新產品上市發布。", "Recycling presentation：資源回收專題簡報。", "Facility / Venue：場地與周邊設施。", "Attendee / Exhibitor：與會者 / 參展商。", "Audio comprehension：商務聽力理解練習。"], "next_week_tasks": ["💡 課堂延續練習：下週上課將核對 3 項聽力題目的細部答案，請先標記出 Amy 和 Marta 抵達日期的時間差距。"], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/BP_A2_WB_5_05.mp3", "link_text": "收聽 BP A2 5.5 練習音檔 (MP3)"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "自學任務 (Self-Study)", "title": "拒絕制式回答：替代 'I’m fine, thank you' (Papa Teach Me)", "key_takeaways": "【影片核心內容摘要】\n知名英語教學頻道 Papa Teach Me 深入探討母語人士在日常社交中如何依據真實心境提供靈活、道地的回覆，徹底擺脫死板的 'I'm fine, thank you'；同時傳授如何敏銳觀察對方面色並給予合適的關懷問候。\n\n【自學任務清單】\n✔ 任務 1：掌握至少 15 種回答 'How are you?' 的替換說法。\n✔ 任務 2：當對方看起來氣色不佳、生病或心情低落時，熟記 5 種關心問句。", "main_content": "• 狀況極佳：Never better! / Couldn't be better!\n• 平淡日常：Can't complain. / Same old, same old. / The usual。\n• 關懷問句：Are you feeling alright? / You look a bit under the weather.", "vocab_notes": ["Can't complain：挺好的，沒什麼好挑剔的。", "A bit under the weather：身體微恙、略感不適（口語高頻慣用語）。", "Never better：再好不過了，表示個人狀態極佳。", "Couldn't be better：不能再更好了，最高級讚美。", "You look a bit down：你看起來有點沒精神/心情低落。", "Hang in there：撐著點、加油，用於安慰面臨壓力的人。", "Self-study task：課後自學訓練任務。"], "next_week_tasks": ["💡 下週課堂暖身示範：下週課前寒暄，老師將隨機指定情境（例如：極好、平淡、疲憊），請同學以影片中的在地說法即興回應，不可使用 'I'm fine'！"], "link": "https://www.youtube.com/watch?v=f259lQdMo2s", "link_text": "開啟 YouTube 教學影片 (14:18)"}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "走廊寒暄 (Catching Up)", "title": "巧遇寒暄與公務告退 (Catching up with Each Other)", "key_takeaways": "【課堂情境與學習重點】\n1. 在走廊、電梯口或課後偶遇時，進行自然簡短的 30 秒破冰寒暄。\n2. 當有緊急公務（如趕著交報告、開會）時，如何有禮貌且合情合理地向對方告退，並給予正面口語祝福。", "main_content": "A: Hi, [Name. How have you been?\nB: Things are good~ And how are things with you?\nA: Same old, same old。\nB: What are you doing after class?\nA: I’ve got to get back to work. I need to turn in a report by 5:30pm。\nB: Wow, ok. Good luck with that!\nA: Thanks! I really need it!", "vocab_notes": ["Turn in a report：繳交/呈報報告（turn in 同義於 submit 或 hand in）。", "Good luck with that!：祝你在那件事上順利！日常高頻口語祝福。", "Get back to work：回到工作崗位上繼續忙碌。", "Things are good：近況挺不錯的，口語輕鬆回答。", "Deadline / By [Time：截止時間，by 5:30pm 表示最晚在5點半前。", "I really need it：我真的很需要（這句祝福），幽默表達手頭工作確實繁重。", "Wrap up：結束、收尾手邊工作。"], "practice_quiz": [{"question": "【角色扮演練習】你下課後必須趕回辦公室準備下午4點的跨國會議，請用 2 句話向巧遇的同事告退。", "answer": "✔ 參考答案：\n👉 'I've got to get back to work. I have an international meeting at 4:00pm. Catch you later!'"}], "link": "", "link_text": ""}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "差旅交通 (Accommodation)", "title": "研討會住宿與地鐵動線描述 (AIChE Minneapolis)", "key_takeaways": "【課堂情境與學習重點】\n1. 商務差旅中（以赴美參加 AIChE 2026 年會為例）精確描述飯店距離、步行時間、地鐵直達與免轉乘動線。\n2. 詢問與說明房價預算、掌握明尼阿波利斯 Skyway 空中步道系統在防寒與通行上的優勢。", "main_content": "• 距離與位置描述：\n  - The hotel is near / close to the subway station。\n  - The subway station is within walking distance. (= It’s a 5-minute walk to the station.)\n\n• 交通動線與直達：\n  - From the hotel, I can take the subway directly to the conference venue。\n  - I don’t need to transfer。\n\n• 房價說明：\n  - I have no idea about their room price.", "vocab_notes": ["Within walking distance：步行可達的距離（商務出差選飯店首要考量）。", "Directly：副詞，直達地、直接地。", "Transfer：動詞/名詞，轉乘、換線。", "Have no idea about...：對...完全不清楚、毫不知情。", "Single room rate：單人房每晚房價。", "Skyway system：空中連通步道系統（如明尼阿波利斯著名防寒通道）。", "Venue：大會活動或展覽舉辦的指定會場。", "Proximity：鄰近程度、距離接近。"], "practice_quiz": [{"question": "【句型轉換】請將 'The conference venue is 500 meters away, you can walk there in 5 minutes.' 改寫為包含 'within walking distance' 的商務表達。", "answer": "✔ 參考答案：\n👉 'The conference venue is within walking distance — it’s just a 5-minute walk.'"}], "link": "https://minneapolis-2021.s3.amazonaws.com/images/2024_SkywayMap_Digital.pdf?v=1726683206", "link_text": "Minneapolis Skyway & Hotel Map"}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "在地推薦 (Recommendations)", "title": "會後在地景點與美食推薦 (Post-conference Recommendations)", "key_takeaways": "【課堂情境與學習重點】\n1. 向外國訪客介紹台灣在地景點（如高雄景點與特色小吃）的高階推薦句型。\n2. ★ 重要文法核心：worth (值得) 後方必須接動名詞『V-ing』！（例：is worth visiting / eating）。\n3. 提醒外國友人避開觀光陷阱與敲竹槓店家（Tourist trap / Rip-off）。", "main_content": "• 推薦原因句型：\n  - I recommend [Place/Food because [Reason。\n  - I think [Place/Food is worth seeing/visiting/eating, as it [Reason。\n\n• 最高評價句型：\n  - [Place/Food is my all-time favorite. It’s a must-see / must-eat / must-do here in Kaohsiung。\n  - You simply can’t miss [Place/Food. It’s a once-in-a-lifetime experience!", "vocab_notes": ["All-time favorite：一直以來的最愛、終極最愛。", "Must-see / Must-eat：必看景點 / 必吃美食（名詞用法）。", "Tourist trap：專門敲觀光客竹槓的黑店或名不副實的景點。", "Rip-off (n./v.)：敲竹槓、暴利商品；That guava cost NT$500? It’s a rip-off!", "Fusion restaurant：創意融合料理、跨國界風味餐廳。", "Bed and breakfast (B&B)：民宿、提供床位與早餐的旅宿。", "Food court：百貨公司或商場的美食街。", "Once-in-a-lifetime：一生一次、絕無僅有的難得體驗。", "Local specialty：在地特色名產/小吃。"], "practice_quiz": [{"question": "【文法挑錯】請修正：'The Liuhe Night Market is worth to visit, but watch out for some tourist traps.'", "answer": "✔ 錯誤修正：\n將 to visit 改為 visiting。\n👉 正確：The Liuhe Night Market is worth visiting, but watch out for some tourist traps. (worth + V-ing)"}], "link": "", "link_text": ""}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "商務人脈 (Networking)", "title": "展會破冰與部門職掌交流 (Networking Role-Play)", "key_takeaways": "【課堂情境與學習重點】\n商務人脈拓展（Networking）標準五部曲：\n禮貌自我介紹 ➔ 詢問對方部門業務 ➔ 簡介自己部門職掌 ➔ 主動提出能為對方提供協助或解決問題 ➔ 交換名片約定後續跟進。", "main_content": "A: Hello, I’m [Name. I work as a [Title in [Dept。\nB: Hi, I’m [Name. It’s a pleasure to meet you。\nA: Can you tell me about your department?\nB: Sure! We [Responsibilities。\nA: Can I briefly tell you about what our department does?\nB: Of course! I’m all ears. / Fire away!\nA: We [Our work. I think we might be able to help you。\nB: That would be great! / It’s so nice of you to offer help。\nA: Here's my business card should you want to call。\nB: Absolutely. I’ll be in touch / I'll give you a call soon。", "vocab_notes": ["Fire away!：口語片語，表示請說吧、開始問吧。", "I'm all ears：我洗耳恭聽、全神貫注在聽。", "Offer help：主動提出協助。", "I'll be in touch：我會再與您保持聯絡。", "Business card：名片；Here's my business card 這是我的名片。", "Briefly explain：簡明扼要地說明、簡述。", "Encounter a problem：在工作上遭遇問題或挑戰。", "Follow-up：後續跟進聯絡與業務推進。"], "practice_quiz": [{"question": "【商務片語】在遞出名片給潛在客戶時，最得體、自然的商務句型是什麼？", "answer": "✔ 參考答案：\n👉 'Here's my business card should you want to call / get in touch.'"}], "link": "", "link_text": ""}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "BBC 職場英語 (BBC Networking)", "title": "商務社交實戰：Tip Top Trading (BBC #48 Face-to-face)", "key_takeaways": "【詳細劇情情境摘要】\nTip Top Trading 的員工參加產業大會。Anna 必須在會場與同業積極拓展人脈（Networking）。同時公司正面臨嚴峻的經濟景氣（Tough economic climate），管理階層面臨裁員縮編壓力（Reduce team / be rid of staff）。Anna 必須把握展會機會展現熱情，積極爭取新商機。\n\n【Networking 社交心法與觀看重點】\n1. 核心精神：Networking 是透過結識同業建立連結、分享資訊並為公司爭取新業務。\n2. 社交心態：保持友善熱絡 (Just be chatty and friendly)。\n3. 破冰技巧：主動自我介紹 ➔ 詢問對方需求並簡介業務 ➔ 交換名片約定後續聯繫。", "main_content": "• Do some networking = do some schmoozing (建立人脈 / 社交應酬)\n• I’ll give it a try. = I’ll give it a shot. (我來試試看)\n• Let’s get down to business. (讓我們切入正題談公事)\n• It's a tough economic climate. (這是個嚴峻的經濟景氣)\n• Here's my business card should you want to call。", "vocab_notes": ["Schmooze (v.)：社交應酬、拉攏關係、建立人脈。", "Be rid of：擺脫、裁減（員工）。", "Prestigious award：享有盛望的大獎。", "Give it a shot：嘗試一下（口語高頻同義詞 give it a try）。", "Tough economic climate：艱困的經濟大環境。", "Sort this out：解決這項難題、處理好這件事。", "Promote business：推廣公司業務與產品。", "In your hands：掌握在你的責任範圍內。"], "next_week_tasks": ["💡 課堂角色扮演預告：下週課堂將進行兩人一組 Networking 配對演練，一人扮演尋找解決方案的客戶，一人代表公司主動 Offer Help 並交換名片！"], "link": "https://www.bbc.co.uk/learningenglish/features/english-at-work/48-language-for-networking", "link_text": "前往 BBC 課程網頁 (收聽音檔與劇本)"}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "自學任務 (Self-Study)", "title": "Passkey 通行密鑰原理 (BBC News 02:35)", "key_takeaways": "【影片詳細摘要】\nBBC News 深入探討 Passkey（通行密鑰）技術如何透過裝置端生物辨識（指紋/FaceID）取代傳統容易被駭、外洩或遺忘的字元密碼，成為新一代跨平台網路安全驗證標準。\n\n【課後自學任務 Tasks】\n✔ 任務：觀看影片後，用 1-3 句英文簡述 Passkey 相比傳統密碼最大的安全性優勢。", "main_content": "• Passkey (通行密鑰)\n• Online security & Authentication (網路安全與身分驗證)\n• Biometrics (生物辨識技術：Touch ID / Face ID)\n• Passwordless future (無密碼化趨勢)", "vocab_notes": ["Authentication：身分驗證、認證流程。", "Biometrics：生物辨識技術（如指紋、臉部辨識）。", "Data encryption：資料加密傳輸技術。", "Cybersecurity threat：資訊安全威脅與釣魚網站防護。"], "next_week_tasks": ["💡 課堂示範預告：下週課堂老師將抽點同學以 1 分鐘英文簡報（Quick Summary）說明：'Why are passkeys more secure than traditional passwords?'，請先擬妥要點。"], "link": "https://www.youtube.com/watch?v=lf5L_1oqHDs", "link_text": "開啟 BBC Passkey 影片 (02:35)"}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "自學任務 (Self-Study)", "title": "智慧眼鏡防偷拍妙招 (CNN Shorts 02:15)", "key_takeaways": "【影片詳細情境摘要】\nCNN 報導網路上流傳一項應對智慧眼鏡（如 Meta Ray-Ban）未經同意偷拍的新招數：如果你懷疑身邊有人正配戴智慧眼鏡對你進行錄影，可以在現場播放或哼唱『迪士尼版權歌曲』！因為社群平台的演算法與版權偵測技術會自動識別受版權保護的音訊，一旦對方將偷拍影片上傳至社群平台，該影片很可能會直接被系統下架或消音。Meta 同時向 CNN 表示已在 AI 智慧眼鏡鏡框上內建 LED 隱私提示燈，並嚴肅看待未經同意的偷拍行為。\n\n【課後自學任務 Tasks】\n✔ 任務：記住關於隱私隱憂、拍攝與版權偵測相關的英文詞彙。", "main_content": "• Smart glasses & Being filmed (智慧眼鏡與正在被錄影)\n• Privacy concern & Filming without consent (隱私隱憂與未經同意拍攝)\n• Copyrighted song & Detection technology (版權歌曲與偵測下架技術)\n• LED indicator light (鏡框拍攝提示指示燈)", "vocab_notes": ["Film without consent：未經同意擅自錄影/拍攝。", "Privacy concern：個人隱私隱憂與防範。", "Copyrighted content：受智慧財產權保護的內容。", "Detection technology：自動偵測辨識技術。", "Indicator light：LED 拍攝提示燈號。", "Take something seriously：嚴肅重視某項議題。"], "next_week_tasks": ["💡 課堂討論預告：下週將針對『穿戴式 AI 裝置與個人隱私 (Privacy Concerns)』進行課堂分組討論，請準備好 1 個支持或反對在公共場合配戴智慧眼鏡的英文論點。"], "link": "https://youtube.com/shorts/H7qyXwntx08?si=zc6OtSPaJOuWMik9", "link_text": "開啟 CNN Smart Glasses 短片 (02:15)"}];
         let filteredPool = [];
         let currentIndex = 0;
         let currentTab = 'sentence';
@@ -520,6 +569,17 @@
             }
         }
 
+        function toggleAnswer(btn) {
+            const ansDiv = btn.nextElementSibling;
+            if (ansDiv.style.display === 'block') {
+                ansDiv.style.display = 'none';
+                btn.innerText = '👁️ 顯示參考答案';
+            } else {
+                ansDiv.style.display = 'block';
+                btn.innerText = '🙈 隱藏答案';
+            }
+        }
+
         function initWeekOptions() {
             const selector = document.getElementById('weekFilter');
             selector.innerHTML = "";
@@ -566,7 +626,9 @@
                 document.getElementById('titleDisplay').innerText = "本分類尚無內容";
                 document.getElementById('takeawaysSection').style.display = "none";
                 document.getElementById('mainContentSection').style.display = "none";
+                document.getElementById('quizSection').style.display = "none";
                 document.getElementById('vocabSection').style.display = "none";
+                document.getElementById('taskSection').style.display = "none";
                 document.getElementById('linkSection').style.display = "none";
                 document.getElementById('counterDisplay').innerText = "0 / 0";
                 return;
@@ -588,6 +650,7 @@
             document.getElementById('counterDisplay').innerText = (currentIndex + 1) + " / " + filteredPool.length;
             document.getElementById('titleDisplay').innerText = cleanText(item.title);
 
+            // 核心重點
             const tkSection = document.getElementById('takeawaysSection');
             if (item.key_takeaways) {
                 tkSection.style.display = "block";
@@ -596,6 +659,7 @@
                 tkSection.style.display = "none";
             }
 
+            // 學習內容
             const mcSection = document.getElementById('mainContentSection');
             if (item.main_content) {
                 mcSection.style.display = "block";
@@ -604,6 +668,27 @@
                 mcSection.style.display = "none";
             }
 
+            // 實戰練習題區塊
+            const quizSection = document.getElementById('quizSection');
+            const quizContainer = document.getElementById('quizContainer');
+            quizContainer.innerHTML = "";
+            if (item.practice_quiz && item.practice_quiz.length > 0) {
+                quizSection.style.display = "block";
+                item.practice_quiz.forEach(q => {
+                    const qCard = document.createElement('div');
+                    qCard.className = 'quiz-card';
+                    qCard.innerHTML = `
+                        <div class="quiz-q">${cleanText(q.question)}</div>
+                        <button class="quiz-toggle-btn" onclick="toggleAnswer(this)">👁️ 顯示參考答案</button>
+                        <div class="quiz-ans">${cleanText(q.answer)}</div>
+                    `;
+                    quizContainer.appendChild(qCard);
+                });
+            } else {
+                quizSection.style.display = "none";
+            }
+
+            // 重點單字與注意事項
             const vbSection = document.getElementById('vocabSection');
             const vocabUl = document.getElementById('vocabDisplay');
             vocabUl.innerHTML = "";
@@ -618,6 +703,18 @@
                 vbSection.style.display = "none";
             }
 
+            // 下週課堂示範任務區塊
+            const taskSection = document.getElementById('taskSection');
+            const taskContainer = document.getElementById('taskContainer');
+            taskContainer.innerHTML = "";
+            if (item.next_week_tasks && item.next_week_tasks.length > 0) {
+                taskSection.style.display = "block";
+                taskContainer.innerHTML = cleanText(item.next_week_tasks.join('\n\n'));
+            } else {
+                taskSection.style.display = "none";
+            }
+
+            // 延伸資源按鈕
             const linkSection = document.getElementById('linkSection');
             const linkTag = document.getElementById('linkDisplay');
             if (item.link) {
