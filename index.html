@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Networking English</title>
+    <title>Networking English - AI Learning Suite</title>
     <style>
         :root {
             --primary: #4f46e5;
@@ -62,16 +62,6 @@
                 max-height: 72vh !important;
                 border-radius: 28px !important;
             }
-            .title {
-                font-size: 23px !important;
-            }
-            .block-desc, .vocab-ul {
-                font-size: 16px !important;
-            }
-            .chat-bubble-content {
-                font-size: 16px !important;
-                max-width: 80% !important;
-            }
         }
 
         body {
@@ -115,7 +105,18 @@
             letter-spacing: 0.3px;
         }
 
-        /* 工具列 (含語言切換按鈕) */
+        /* 頂部主模式切換列 (學習卡片 / 8大學習模組 / 全真模擬考) */
+        .main-mode-nav {
+            display: flex; gap: 6px; background-color: #e2e8f0; padding: 5px; border-radius: 16px; margin-bottom: 10px;
+        }
+        .main-mode-btn {
+            flex: 1; padding: 10px 4px; font-size: 14px; font-weight: 800; border: none; border-radius: 12px;
+            background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease;
+        }
+        .main-mode-btn.active {
+            background: #ffffff; color: var(--primary); box-shadow: 0 3px 10px rgba(79, 70, 229, 0.15);
+        }
+
         .pen-toolbar {
             display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;
         }
@@ -152,8 +153,7 @@
         }
 
         .card-container {
-            width: 100%; flex: 1; display: flex; flex-direction: column;
-            position: relative;
+            width: 100%; flex: 1; display: flex; flex-direction: column; position: relative;
         }
         .card {
             background-color: var(--card-bg); border-radius: 24px;
@@ -164,24 +164,18 @@
         }
 
         #drawCanvas {
-            position: absolute; top: 0; left: 0;
-            pointer-events: none;
-            z-index: 100;
+            position: absolute; top: 0; left: 0; pointer-events: none; z-index: 100;
         }
         .card.canvas-active #drawCanvas {
-            pointer-events: auto;
-            touch-action: none;
+            pointer-events: auto; touch-action: none;
         }
 
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .badge { font-size: 12.5px; font-weight: 700; padding: 5px 12px; border-radius: 20px; background-color: var(--primary-soft); color: var(--primary); }
-        .badge.media-badge { background-color: #fef3c7; color: #92400e; }
-        .badge.task-badge { background-color: #dcfce7; color: #166534; }
         .date-badge { font-size: 12.5px; color: var(--text-muted); font-weight: 600; }
         .counter { font-size: 13px; color: var(--text-muted); font-weight: 700; }
         
         .title { font-size: 21px; font-weight: 800; color: var(--text-title); margin-bottom: 14px; line-height: 1.35; }
-        
         .block-section { margin-bottom: 18px; text-align: left; }
         
         .tag-title {
@@ -195,21 +189,10 @@
 
         .block-desc { font-size: 15.5px; color: var(--text-body); line-height: 1.65; margin: 0; white-space: pre-line; }
 
-        .content-plain-box {
-            font-size: 16px; font-weight: 600; color: #0c4a6e; line-height: 1.65;
-            background-color: var(--sky-bg); padding: 16px; border-radius: 16px; white-space: pre-line;
-            border: 1px solid var(--sky-border); margin: 0;
-        }
-
-        .dialogue-container {
-            display: flex; flex-direction: column; gap: 10px; margin-top: 4px;
-        }
-        .chat-bubble-row {
-            display: flex; align-items: flex-start; gap: 8px; width: 100%;
-        }
-        .chat-bubble-row.speaker-b {
-            flex-direction: row-reverse;
-        }
+        /* A/B 對話氣泡排版 */
+        .dialogue-container { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+        .chat-bubble-row { display: flex; align-items: flex-start; gap: 8px; width: 100%; }
+        .chat-bubble-row.speaker-b { flex-direction: row-reverse; }
         .speaker-avatar {
             width: 30px; height: 30px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
@@ -222,133 +205,78 @@
         .chat-bubble-content {
             max-width: 82%; padding: 11px 15px; border-radius: 16px;
             font-size: 15.5px; line-height: 1.5; font-weight: 600;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
         }
         .speaker-a .chat-bubble-content {
-            background-color: var(--bubble-a-bg);
-            color: var(--bubble-a-text);
-            border: 1.5px solid var(--bubble-a-border);
-            border-top-left-radius: 4px;
+            background-color: var(--bubble-a-bg); color: var(--bubble-a-text);
+            border: 1.5px solid var(--bubble-a-border); border-top-left-radius: 4px;
         }
         .speaker-b .chat-bubble-content {
-            background-color: var(--bubble-b-bg);
-            color: var(--bubble-b-text);
-            border: 1.5px solid var(--bubble-b-border);
-            border-top-right-radius: 4px;
+            background-color: var(--bubble-b-bg); color: var(--bubble-b-text);
+            border: 1.5px solid var(--bubble-b-border); border-top-right-radius: 4px;
         }
 
-        .vocab-ul {
-            margin: 0; padding-left: 20px; font-size: 15px; color: var(--text-body); line-height: 1.7;
-        }
+        .vocab-ul { margin: 0; padding-left: 20px; font-size: 15px; color: var(--text-body); line-height: 1.7; }
         .vocab-ul li { margin-bottom: 7px; }
 
         .quiz-card {
-            background-color: var(--violet-bg);
-            border: 1.5px solid var(--violet-border);
-            border-radius: 18px;
-            padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 8px rgba(107, 33, 168, 0.04);
+            background-color: var(--violet-bg); border: 1.5px solid var(--violet-border);
+            border-radius: 18px; padding: 16px; margin-bottom: 12px;
         }
-        .quiz-q {
-            font-size: 15.5px; font-weight: 700; color: #4c1d95; line-height: 1.6; margin-bottom: 10px;
-            white-space: pre-line;
-        }
-        
-        .blank-line {
-            display: inline-block;
-            min-width: 80px;
-            border-bottom: 2.5px solid #7c3aed;
-            margin: 0 4px;
-            vertical-align: baseline;
-        }
+        .quiz-q { font-size: 15.5px; font-weight: 700; color: #4c1d95; line-height: 1.6; margin-bottom: 10px; }
+        .blank-line { display: inline-block; min-width: 80px; border-bottom: 2.5px solid #7c3aed; margin: 0 4px; }
 
         .quiz-toggle-btn {
             background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-            color: #ffffff; border: none; padding: 7px 16px;
-            border-radius: 12px; font-size: 13.5px; font-weight: 700; cursor: pointer;
-            box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25);
-            transition: all 0.2s ease;
+            color: #ffffff; border: none; padding: 7px 16px; border-radius: 12px; font-size: 13.5px; font-weight: 700; cursor: pointer;
         }
-        .quiz-toggle-btn:active { transform: scale(0.96); }
-
-        .quiz-ans-wrapper {
-            display: none;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px dashed #d8b4fe;
-        }
-        .quiz-ans-title {
-            font-size: 13.5px; font-weight: 800; color: #15803d; margin-bottom: 8px;
-            display: flex; align-items: center; gap: 4px;
-        }
+        .quiz-ans-wrapper { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #d8b4fe; }
         .quiz-ans-box {
-            background: #ffffff;
-            padding: 12px 14px;
-            border-radius: 14px;
-            border: 1.5px solid #bbf7d0;
-            font-size: 15px;
-            color: #14532d;
-            line-height: 1.65;
-            white-space: pre-line;
-            font-weight: 600;
+            background: #ffffff; padding: 12px 14px; border-radius: 14px; border: 1.5px solid #bbf7d0;
+            font-size: 15px; color: #14532d; line-height: 1.65; white-space: pre-line; font-weight: 600;
         }
 
-        .mini-dialogue-box {
-            display: flex; flex-direction: column; gap: 8px;
+        /* 8 大模式專屬 UI 樣式 */
+        .suite-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;
         }
-        .mini-bubble-row {
-            display: flex; align-items: flex-start; gap: 6px; width: 100%;
+        .suite-btn {
+            background: #ffffff; border: 1.5px solid #cbd5e1; padding: 10px 8px; border-radius: 14px;
+            font-size: 13px; font-weight: 800; color: #334155; cursor: pointer; text-align: left;
+            display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;
         }
-        .mini-bubble-row.mini-b {
-            flex-direction: row-reverse;
-        }
-        .mini-avatar {
-            width: 24px; height: 24px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0; margin-top: 3px;
-        }
-        .mini-avatar.av-a { background: #2563eb; }
-        .mini-avatar.av-b { background: #7c3aed; }
-        .mini-content {
-            max-width: 84%; padding: 8px 12px; border-radius: 12px; font-size: 14.5px; line-height: 1.45; font-weight: 600;
-        }
-        .mini-a .mini-content {
-            background-color: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1;
-        }
-        .mini-b .mini-content {
-            background-color: #ede9fe; color: #3b0764; border: 1px solid #ddd6fe;
+        .suite-btn.active {
+            background: #eef2ff; border-color: #6366f1; color: #4338ca;
         }
 
-        .task-box {
-            background-color: var(--violet-bg);
-            border: 1.5px solid var(--violet-border);
-            border-radius: 16px;
-            padding: 16px;
-            font-size: 15px;
-            line-height: 1.6;
-            color: #4c1d95;
-            font-weight: 600;
+        .suite-panel {
+            background: #ffffff; border: 1.5px solid var(--border-color); border-radius: 20px;
+            padding: 18px; margin-top: 8px;
+        }
+        .suite-panel h3 { margin: 0 0 10px 0; font-size: 17px; color: #1e1b4b; }
+
+        /* Podcast 語音按鈕 */
+        .podcast-box {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            color: #ffffff; padding: 18px; border-radius: 20px; text-align: center;
+        }
+        .podcast-play-btn {
+            background: #10b981; color: #fff; border: none; padding: 12px 24px; border-radius: 24px;
+            font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 10px;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
         }
 
-        .link-box { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border-color); text-align: left; }
-        .link-btn {
-            display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; box-sizing: border-box;
-            padding: 13px 18px; font-size: 15px; color: #ffffff;
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-            text-decoration: none; font-weight: 700; border-radius: 14px;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
-            transition: all 0.2s ease;
+        /* 費曼教學輸入框 */
+        .teach-input {
+            width: 100%; box-sizing: border-box; min-height: 90px; padding: 12px; font-size: 15px;
+            border-radius: 12px; border: 1.5px solid #cbd5e1; margin-top: 8px; font-family: inherit;
         }
 
         .nav-controls { width: 100%; display: flex; gap: 12px; margin-top: 12px; margin-bottom: 10px; }
         .nav-btn {
             flex: 1; padding: 15px; font-size: 17px; font-weight: 700; border: none; border-radius: 16px; cursor: pointer;
-            transition: all 0.2s ease;
         }
         .btn-prev { background-color: #e2e8f0; color: #334155; }
-        .btn-next { background-color: var(--primary); color: #ffffff; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3); }
-        .nav-btn:active { transform: scale(0.97); }
+        .btn-next { background-color: var(--primary); color: #ffffff; }
     </style>
 </head>
 <body>
@@ -360,9 +288,17 @@
 
         <div class="header">
             <h1>Networking English</h1>
-            <div class="author-badge">By Ryan Liu, V1.2</div>
+            <!-- 正式定版 V1.0 -->
+            <div class="author-badge">By Ryan Liu, V1.0</div>
             
-            <!-- 工具列 (含中英切換) -->
+            <!-- 頂部主模式切換 -->
+            <div class="main-mode-nav">
+                <button class="main-mode-btn active" onclick="switchAppMode('cards', this)">📚 學習卡片</button>
+                <button class="main-mode-btn" onclick="switchAppMode('suite', this)">⚡ 8大學習模組</button>
+                <button class="main-mode-btn" onclick="switchAppMode('exam', this)">📝 全真模擬考</button>
+            </div>
+
+            <!-- 工具列 -->
             <div class="pen-toolbar">
                 <button id="langToggleBtn" class="tool-btn lang-btn" onclick="toggleLanguage()">
                     <span id="langBtnText">🌐 English</span>
@@ -379,78 +315,107 @@
             </div>
         </div>
 
-        <div class="filters">
-            <select id="weekFilter" onchange="applyFilters()"></select>
-            <div class="tab-group">
-                <button id="tabSentence" class="tab-btn active" onclick="setTab('sentence', this)">句型 / 文法</button>
-                <button id="tabMedia" class="tab-btn" onclick="setTab('media', this)">影音 / 自學</button>
+        <!-- 視圖 1: 學習卡片模式 (預設) -->
+        <div id="viewCards">
+            <div class="filters">
+                <select id="weekFilter" onchange="applyFilters()"></select>
+                <div class="tab-group">
+                    <button id="tabSentence" class="tab-btn active" onclick="setTab('sentence', this)">句型 / 文法</button>
+                    <button id="tabMedia" class="tab-btn" onclick="setTab('media', this)">影音 / 自學</button>
+                </div>
             </div>
-        </div>
 
-        <div class="card-container">
-            <div class="card" id="cardElement">
-                <canvas id="drawCanvas"></canvas>
+            <div class="card-container">
+                <div class="card" id="cardElement">
+                    <canvas id="drawCanvas"></canvas>
 
-                <div>
-                    <div class="card-header">
-                        <div>
-                            <span class="badge" id="categoryBadge">分類</span>
-                            <span class="date-badge" id="dateDisplay"></span>
+                    <div>
+                        <div class="card-header">
+                            <div>
+                                <span class="badge" id="categoryBadge">分類</span>
+                                <span class="date-badge" id="dateDisplay"></span>
+                            </div>
+                            <span class="counter" id="counterDisplay">0 / 0</span>
                         </div>
-                        <span class="counter" id="counterDisplay">0 / 0</span>
-                    </div>
-                    <div class="title" id="titleDisplay">標題</div>
+                        <div class="title" id="titleDisplay">標題</div>
 
-                    <div class="block-section" id="takeawaysSection">
-                        <div class="tag-title tag-amber" id="tagTakeaways">💡 核心重點說明</div>
-                        <div class="block-desc" id="takeawaysDisplay"></div>
-                    </div>
+                        <div class="block-section" id="takeawaysSection">
+                            <div class="tag-title tag-amber" id="tagTakeaways">💡 核心重點說明</div>
+                            <div class="block-desc" id="takeawaysDisplay"></div>
+                        </div>
 
-                    <div class="block-section" id="mainContentSection">
-                        <div class="tag-title tag-sky" id="tagMainContent">📖 整理後學習內容與核心句型</div>
-                        <div id="mainContentContainer"></div>
-                    </div>
+                        <div class="block-section" id="mainContentSection">
+                            <div class="tag-title tag-sky" id="tagMainContent">📖 整理後學習內容與核心句型</div>
+                            <div id="mainContentContainer"></div>
+                        </div>
 
-                    <!-- 句型實戰練習題 -->
-                    <div class="block-section" id="quizSection">
-                        <div class="tag-title tag-violet" id="tagQuiz">✍️ 實戰練習與自我檢測</div>
-                        <div id="quizContainer"></div>
-                    </div>
+                        <!-- 句型實戰練習題 -->
+                        <div class="block-section" id="quizSection">
+                            <div class="tag-title tag-violet" id="tagQuiz">✍️ 實戰練習與自我檢測</div>
+                            <div id="quizContainer"></div>
+                        </div>
 
-                    <div class="block-section" id="vocabSection">
-                        <div class="tag-title tag-emerald" id="tagVocab">📝 重點單字與注意事項</div>
-                        <ul class="vocab-ul" id="vocabDisplay"></ul>
-                    </div>
-
-                    <!-- 下週課堂延續任務 -->
-                    <div class="block-section" id="taskSection">
-                        <div class="tag-title tag-violet" id="tagTask">🎯 下週課堂延續示範任務</div>
-                        <div id="taskContainer" class="task-box"></div>
+                        <div class="block-section" id="vocabSection">
+                            <div class="tag-title tag-emerald" id="tagVocab">📝 重點單字與注意事項</div>
+                            <ul class="vocab-ul" id="vocabDisplay"></ul>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="link-box" id="linkSection">
-                    <a class="link-btn" id="linkDisplay" href="#" target="_blank">🔗 開啟延伸閱讀與學習資源</a>
-                </div>
+            <div class="nav-controls">
+                <button id="btnPrev" class="nav-btn btn-prev" onclick="navigateCard(-1)">上一則</button>
+                <button id="btnNext" class="nav-btn btn-next" onclick="navigateCard(1)">下一則</button>
             </div>
         </div>
 
-        <div class="nav-controls">
-            <button id="btnPrev" class="nav-btn btn-prev" onclick="navigateCard(-1)">上一則</button>
-            <button id="btnNext" class="nav-btn btn-next" onclick="navigateCard(1)">下一則</button>
+        <!-- 視圖 2: 8 大特訓模組 (AI Learning Suite) -->
+        <div id="viewSuite" style="display: none;">
+            <div class="suite-grid">
+                <button class="suite-btn active" onclick="loadSuiteTool('guide', this)">📖 速成指南</button>
+                <button class="suite-btn" onclick="loadSuiteTool('socratic', this)">🏛️ 蘇格拉底問答</button>
+                <button class="suite-btn" onclick="loadSuiteTool('forecaster', this)">🎯 考點預測 Top5</button>
+                <button class="suite-btn" onclick="loadSuiteTool('confusion', this)">💡 盲點澄清器</button>
+                <button class="suite-btn" onclick="loadSuiteTool('gap', this)">🔍 知識缺口診斷</button>
+                <button class="suite-btn" onclick="loadSuiteTool('podcast', this)">🎙️ Audio Podcast</button>
+                <button class="suite-btn" onclick="loadSuiteTool('teachback', this)">🧑‍🏫 費曼自述檢測</button>
+                <button class="suite-btn" onclick="switchAppMode('exam', document.querySelectorAll('.main-mode-btn')[2])">📝 模擬考卷</button>
+            </div>
+
+            <div class="suite-panel" id="suiteContentPanel">
+                <!-- 動態注入 8 大工具內容 -->
+            </div>
         </div>
+
+        <!-- 視圖 3: 全真模擬考卷 (Practice Exam Generator) -->
+        <div id="viewExam" style="display: none;">
+            <div class="card" style="max-height: 75vh;">
+                <h2 style="font-size: 20px; color: #1e1b4b; margin-top:0;">📝 Networking English 全真模擬檢測試卷</h2>
+                <div style="font-size: 13px; color: #64748b; margin-bottom: 14px;">⏱️ 建議作答時間：20 分鐘 | 滿分：100 分</div>
+                
+                <div id="examContainer"></div>
+                
+                <button class="quiz-toggle-btn" style="width: 100%; padding: 14px; font-size: 16px; margin-top: 16px;" onclick="toggleExamAnswers()">
+                    🎯 繳卷並核對全真詳解
+                </button>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        const LOCAL_APP_VERSION = "2026-08-26 22:41:03";
-        const rawDatabase = [{"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "社交問候 (Greetings)", "category_en": "Greetings & Small Talk", "title": "打招呼與近況寒暄 (Greetings & Responses)", "title_en": "Greetings & Daily Catch-ups", "key_takeaways": "1. 熟人與同事間的自然問候：優先使用 Hey there! 或 How’s it going?。\n2. 描述近況平淡無波折時：避免只說 I'm fine，使用 Same old, same old 或 The usual 更在地自然。", "key_takeaways_en": "1. Natural casual greetings: Use 'Hey there!' or 'How’s it going?' among coworkers.\n2. Neutral responses: Instead of just saying 'I’m fine', use 'Same old, same old' or 'The usual' for natural daily updates.", "main_content": "• 自然問候 (Informal Greetings):\n  - Hey there!\n  - How’s it going?\n  - How are things (with you)?\n\n• 描述近況平穩 (Neutral Responses):\n  - Same old, same old!\n  - The usual. / Pretty much the same.\n  - (Pretty) uneventful. / Nothing special.", "vocab_notes": ["Same old, same old：高頻口語，表達工作或生活一切照舊、沒太大變化。", "Uneventful：形容詞，指平靜無事的、沒有重大事件發生的。", "How have you been?：現在完成式，用於詢問自上次見面以來的近況。", "Can't complain：挺好的、沒什麼好挑剔的，相當於 Not bad 或 Pretty good。", "Pretty much the same：幾乎跟平常一模一樣，常用於回答 How are things?。"], "vocab_notes_en": ["Same old, same old: Common idiom indicating that life or work is going on as usual.", "Uneventful: Adjective meaning quiet with no exciting, unusual, or major events.", "How have you been?: Present perfect tense used to ask about someone's life since last meeting.", "Can't complain: Casual phrase meaning things are pretty good and there's nothing to gripe about.", "Pretty much the same: Standard polite response to 'How are things?'."], "practice_quiz": [{"question": "【填空題】同事問你 How’s work going?，你想回答「老樣子，一切照舊」：\n_________ , _________ ! Pretty much the same.", "question_en": "Fill-in-the-blank: When asked 'How’s work going?', reply that everything is as usual:\n_________ , _________ ! Pretty much the same.", "answer": "✔ 填空解答：Same old, same old\n👉 整句回答：Same old, same old! Pretty much the same.\n💡 解析：Same old, same old 是最道地的口語說法，用來表達一切如常。", "answer_en": "✔ Answer: Same old, same old\n👉 Full Sentence: Same old, same old! Pretty much the same.\n💡 Explanation: Standard conversational reply indicating routine and normalcy."}, {"question": "【填空題】想表達「最近沒什麼大事發生，挺平靜的」，請填入字首為 un- 的形容詞：\nThings have been pretty _________ lately.", "question_en": "Fill-in-the-blank: Express that work/life has been calm and quiet without major issues (starts with 'un-'):\nThings have been pretty _________ lately.", "answer": "✔ 填空解答：uneventful\n👉 整句回答：Things have been pretty uneventful lately.\n💡 解析：uneventful 指平靜無事、無重大波折。", "answer_en": "✔ Answer: uneventful\n👉 Full Sentence: Things have been pretty uneventful lately.\n💡 Explanation: 'Uneventful' denotes that nothing unexpected or disruptive happened."}], "link": "https://www.linkedin.com/pulse/18-ways-say-hello-english-thomas-spengler/", "link_text": "18 Ways to Say Hello in English"}, {"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "道別用語 (Goodbyes)", "category_en": "Goodbyes & Core Grammar", "title": "道別與重要文法規則 (Ways to Say Goodbye & Grammar)", "title_en": "Ways to Say Goodbye & Grammar Rule", "key_takeaways": "Pro Tip 文法核心：Look forward to 中的 to 是介系詞，後面必須接動名詞 (V-ing) 或名詞，絕不可接原形動詞！\n✔ 正確：I look forward to seeing you in Kaohsiung.\n✖ 錯誤：I look forward to see you.", "key_takeaways_en": "Grammar Core: The 'to' in 'look forward to' is a preposition, so it MUST be followed by a gerund (V-ing) or a noun!\n✔ Correct: I look forward to seeing you in Kaohsiung.\n✖ Incorrect: I look forward to see you.", "main_content": "• 非正式道別 (Informal Goodbyes):\n  - I’ve got to get going! (= I have to leave now)\n  - Take it easy! / Have a good one!\n  - I’m off!\n\n• 正式商務道別 (Formal Goodbyes):\n  - It was nice meeting you. / It was a pleasure to see you。\n  - I look forward to our next meeting!\n  - I look forward to seeing you soon。", "vocab_notes": ["I've got to (= I have to / I need to)：口語中常縮讀為 I gotta。", "Have a good one：美式極常見祝福語，one 可泛指 day, weekend 或 evening。", "Take it easy：道別時使用，相當於保重、放輕鬆。", "Look forward to + V-ing：商務書信與會面結尾最標準的期待相會用語。"], "vocab_notes_en": ["I've got to: Equivalent to 'I have to' or 'I need to', often contracted to 'I gotta' in speech.", "Have a good one: Common American farewell greeting where 'one' stands for day or weekend.", "Take it easy: Friendly way to say goodbye and tell someone not to stress.", "Look forward to + V-ing: Formal phrase used in business correspondence to anticipate future meetings."], "practice_quiz": [{"question": "【文法填空題】請填入 see 的正確動詞形式：\nI look forward to _________ you at the conference next month.", "question_en": "Grammar Quiz: Fill in the correct form of the verb 'see':\nI look forward to _________ you at the conference next month.", "answer": "✔ 填空解答：seeing (V-ing)\n👉 整句回答：I look forward to seeing you at the conference next month.\n💡 解析：Look forward to 的 to 是介系詞，後面必須搭配動名詞 V-ing！", "answer_en": "✔ Answer: seeing (V-ing)\n👉 Full Sentence: I look forward to seeing you at the conference next month.\n💡 Explanation: 'To' is a preposition here, requiring a gerund (V-ing)."}], "link": "https://www.berlitz.com/blog/goodbye-english", "link_text": "81 Ways to Say Goodbye in English"}, {"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "展會社交 (Trade Fair)", "category_en": "Conference Small Talk", "title": "展會破冰與邀約 (Small Talk At a Conference)", "title_en": "Conference Ice-breaking & Happy Hour", "key_takeaways": "展會社交四部曲心法：\n1. 詢問抵達與交通 ➔ 2. 詢問住宿評價與距離 ➔ 3. 交流攤位心得 ➔ 4. 提出社交邀約 (Happy Hour)。", "key_takeaways_en": "Conference Networking 4-Step Formula:\n1. Ask arrival details ➔ 2. Check hotel quality & distance ➔ 3. Discuss exhibitor stands ➔ 4. Propose Happy Hour invitation.", "main_content": "A: When did you arrive?\nB: I flew here yesterday. And you?\nA: I got here 2 days ago. Where are you staying?\nB: At the Mason Park Hotel。\nA: That’s where I am! Do you like the hotel?\nB: It’s okay. The room is small, but comfortable, and it’s a 5-minute walk to the venue。\nA: What do you think of the trade fair?\nB: I like some of the exhibitor’s stands, and I plan to join the happy hour tomorrow at 5pm. Would you like to come?\nA: Why not? Count me in!", "vocab_notes": ["Trade fair：商務展覽會、貿易展。", "Within walking distance：步行即可達到的範圍。", "Count me in!：口語高頻片語，表示算我一份、我也要參加。", "Happy hour：展會結束後的非正式飲酒社交時段，破冰關鍵場合。"], "vocab_notes_en": ["Trade fair: Large exhibition where companies promote products and services.", "Within walking distance: Close enough to easily walk to.", "Count me in!: Enthusiastic idiom meaning 'include me in the activity'.", "Happy hour: Informal social gathering with drinks after conference sessions."], "practice_quiz": [{"question": "【填空題】對方邀請你參加展後聚會，你想表達「算我一份！」，請填入片語：\nWhy not? _________ me _________ !", "question_en": "Fill-in-the-blank: Accept an invitation enthusiastically ('include me!'):\nWhy not? _________ me _________ !", "answer": "✔ 填空解答：Count, in\n👉 整句回答：Why not? Count me in!\n💡 解析：Count me in! 是表示「我也要加入/算我一份」的高頻口語。", "answer_en": "✔ Answer: Count, in\n👉 Full Sentence: Why not? Count me in!\n💡 Explanation: Casual way to say you definitely want to join."}], "link": "", "link_text": ""}, {"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "職場英語 (Workplace)", "category_en": "Workplace Communication", "title": "職場核心表達與行程衝突 (Useful Workplace Phrases)", "title_en": "Workplace Skills & Scheduling Conflicts", "key_takeaways": "職場商務溝通核心：精準表達職能特長、跨部門人際相處，以及面對會議撞期時的專業應對。", "key_takeaways_en": "Core Workplace Communication: Articulate skills clearly, build rapport with colleagues, and handle double-booked meetings professionally.", "main_content": "• 專業特質與人際相處:\n  - This job is an ideal match for my skills and experience。\n  - I get on with people easily. (= I get along with people well)\n\n• 行程衝突與時間管理:\n  - I’ve got two meetings scheduled at the same time. (= I’m double-booked.)\n  - I can’t do them both at once! (= I have a scheduling conflict.)\n\n• 決策權限說明:\n  - The decision is in the hands of the manager。", "vocab_notes": ["Ideal match：理想搭配、完美契合的人選。", "Double-booked：同一時間被重複安排了兩項會議行程。", "Scheduling conflict：時間安排上的衝突、衝堂。", "In the hands of：掌握在...手中、由...作決定。"], "vocab_notes_en": ["Ideal match: A perfect fit for a job position or project role.", "Double-booked: Having two appointments or commitments scheduled at the same time.", "Scheduling conflict: When two planned events clash in timetable.", "In the hands of: Controlled by or dependent on someone's decision."], "practice_quiz": [{"question": "【填空題】當你同一時間被排了兩場會議（撞期），請填入複合形容詞：\nI’m afraid I’m _________ at 3:00 PM.", "question_en": "Fill-in-the-blank: State that you have two meetings scheduled simultaneously:\nI’m afraid I’m _________ at 3:00 PM.", "answer": "✔ 填空解答：double-booked\n👉 整句回答：I’m afraid I’m double-booked at 3:00 PM.\n💡 解析：Double-booked 表示同一時段重複預約/行程衝堂。", "answer_en": "✔ Answer: double-booked\n👉 Full Sentence: I’m afraid I’m double-booked at 3:00 PM.\n💡 Explanation: Indicates a time conflict due to two overlapping meetings."}], "link": "https://www.bbc.co.uk/learningenglish/features/english-at-work/english-at-work-intro", "link_text": "BBC English at Work 介紹頁面"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "影音學習 (Video Study)", "category_en": "Video Study", "title": "商務社交情境：巴黎會面 (Business Partner A2 5.4.1)", "title_en": "Business Socializing in Paris (BP A2 5.4.1)", "key_takeaways": "【詳細劇情情境摘要】\nJulia 抵達巴黎參加商務研討會，與合作夥伴 Maria 和 Max 會面。對話圍繞著抵達的交通方式、入住飯店品質展開。Max 提及雖然飯店房間不大，但勝在舒適且離展場步行僅需幾分鐘。最後三人順勢敲定當晚的晚餐邀約。", "key_takeaways_en": "Summary: Julia arrives in Paris for a conference and meets partners Maria and Max. They discuss travel routes and hotel comfort before planning a joint dinner.", "main_content": "• When did you arrive? / How did she get there?\n• Did Max like the hotel he was staying? (The room is small, but comfortable)\n• What was their dinner plan?", "vocab_notes": ["Socialize with clients：與客戶建立社交關係、商務應酬。", "Make a face：做出不悅、嫌棄或無奈的面部表情。", "Roll one's eyes：翻白眼，表示不認同或受不了。"], "vocab_notes_en": ["Socialize with clients: Networking and building relationships with clients.", "Make a face: Make a facial expression showing dislike or disgust.", "Roll one's eyes: Move eyes upward to show frustration or disbelief."], "next_week_tasks": ["💡 課堂示範預告：老師下週會隨機請同學模擬巴黎會面情境（扮演 Julia, Maria 或 Max），請準備好 30 秒抵達交通與飯店評價對話。"], "next_week_tasks_en": ["💡 In-Class Role-play: Practice a 30-second dialog about travel arrival and hotel review as Julia, Maria, or Max."], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/Bus_Part_A2_U5L4_5.4.1.mp4", "link_text": "觀看 Business Partner 5.4.1 影片 (MP4)"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "聽力學習 (Audio Study)", "category_en": "Listening Practice", "title": "展館心得與產品發表聽力 (BP A2 Workbook 5.5)", "title_en": "Venue Reviews & Product Launch (BP 5.5)", "key_takeaways": "【詳細對話摘要】\nAmy 與 Marta 在展會現場交流彼此抵達展場的日期與參觀心得。Amy 分享了對展覽中心硬體設施的正面評價，並預告隔天自家公司將舉辦新產品發表會；隨後 Victor 加入討論，三人針對『資源回收 (Recycling)』專題演講交流意見。", "key_takeaways_en": "Summary: Amy and Marta exchange thoughts on venue facilities and upcoming product launches, joined by Victor to discuss presentations on recycling.", "main_content": "• Conference center facilities (會議中心硬體設施)\n• Product launch presentation (新產品發表會)\n• Presentation on recycling (環保資源回收簡報)", "vocab_notes": ["Conference hotel：大會指定特約飯店。", "Product launch：新產品上市發布。", "Recycling presentation：資源回收專題簡報。"], "vocab_notes_en": ["Conference hotel: Designated hotel near the convention venue.", "Product launch: Official introduction of a new product to the market.", "Recycling presentation: Presentation focused on waste management and sustainability."], "next_week_tasks": ["💡 課堂延續練習：下週上課將核對 3 項聽力題目的細部答案，請先標記出 Amy 和 Marta 抵達日期的時間差距。"], "next_week_tasks_en": ["💡 Listening Task: Check the arrival date difference between Amy and Marta before class."], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/BP_A2_WB_5_05.mp3", "link_text": "收聽 BP A2 5.5 練習音檔 (MP3)"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "自學任務 (Self-Study)", "category_en": "Self-Study Task", "title": "拒絕制式回答：替代 'I’m fine, thank you' (Papa Teach Me)", "title_en": "Beyond 'I'm Fine, Thank You' (Papa Teach Me)", "key_takeaways": "【影片核心內容摘要】\n深入探討母語人士在日常社交中如何依據真實心境提供靈活、道地的回覆，徹底擺脫死板的 'I'm fine, thank you'；同時傳授如何敏銳觀察對方面色並給予合適的關懷問候。", "key_takeaways_en": "Summary: Learn authentic ways native speakers reply to 'How are you?' based on mood, moving beyond robotic textbook answers.", "main_content": "• 狀況極佳：Never better! / Couldn't be better!\n• 平淡日常：Can't complain. / Same old, same old. / The usual。\n• 關懷問句：Are you feeling alright? / You look a bit under the weather.", "vocab_notes": ["Can't complain：挺好的，沒什麼好挑剔的。", "A bit under the weather：身體微恙、略感不適（口語高頻慣用語）。", "Never better：再好不過了，表示個人狀態極佳。"], "vocab_notes_en": ["Can't complain: Casual reply meaning things are going well.", "Under the weather: Feeling slightly ill, fatigued, or unwell.", "Never better: Feeling at the peak of health and spirits."], "next_week_tasks": ["💡 下週課堂暖身示範：下週課前寒暄，老師將隨機指定情境，請同學以影片中的在地說法即興回應，不可使用 'I'm fine'！"], "next_week_tasks_en": ["💡 Warm-up Task: Prepare to answer 'How are you?' dynamically without using 'I'm fine'."], "link": "https://www.youtube.com/watch?v=f259lQdMo2s", "link_text": "開啟 YouTube 教學影片 (14:18)"}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "走廊寒暄 (Catching Up)", "category_en": "Corridor Small Talk", "title": "巧遇寒暄與公務告退 (Catching up with Each Other)", "title_en": "Casual Catch-up & Polite Departure", "key_takeaways": "【課堂情境與學習重點】\n1. 在走廊、電梯口或課後偶遇時，進行自然簡短的 30 秒破冰寒暄。\n2. 當有緊急公務（如趕著交報告、開會）時，如何有禮貌且合情合理地向對方告退，並給予正面口語祝福。", "key_takeaways_en": "1. 30-second quick catch-up in corridors or after class.\n2. How to politely excuse yourself when rushing to meet deadlines or submit reports.", "main_content": "A: Hi, [Name. How have you been?\nB: Things are good~ And how are things with you?\nA: Same old, same old。\nB: What are you doing after class?\nA: I’ve got to get back to work. I need to turn in a report by 5:30pm。\nB: Wow, ok. Good luck with that!\nA: Thanks! I really need it!", "vocab_notes": ["Turn in a report：繳交/呈報報告（turn in 同義於 submit 或 hand in）。", "Good luck with that!：祝你在那件事上順利！日常高頻口語祝福。", "Get back to work：回到工作崗位上繼續忙碌。"], "vocab_notes_en": ["Turn in a report: Submit or hand in a document/report before deadline.", "Good luck with that!: Common friendly phrase offering encouragement for a task.", "Get back to work: Return to job duties or office."], "practice_quiz": [{"question": "【填空題】你想表達「我必須在下午五點半前繳交報告」，請填入片語 turn ___：\nI need to _________ in a report by 5:30 PM.", "question_en": "Fill-in-the-blank: Express that you must submit a report before 5:30 PM:\nI need to _________ in a report by 5:30 PM.", "answer": "✔ 填空解答：turn\n👉 整句回答：I need to turn in a report by 5:30 PM.\n💡 解析：Turn in 同義於 submit 或 hand in (繳交報告/文件)。", "answer_en": "✔ Answer: turn\n👉 Full Sentence: I need to turn in a report by 5:30 PM.\n💡 Explanation: 'Turn in' is synonymous with 'submit'."}], "link": "", "link_text": ""}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "差旅交通 (Accommodation)", "category_en": "Travel & Logistics", "title": "研討會住宿與地鐵動線描述 (AIChE Minneapolis)", "title_en": "AIChE Conference Transit & Hotel Proximity", "key_takeaways": "【課堂情境與學習重點】\n1. 商務差旅中（以赴美參加 AIChE 2026 年會為例）精確描述飯店距離、步行時間、地鐵直達與免轉乘動線。\n2. 詢問與說明房價預算、掌握明尼阿波利斯 Skyway 空中步道系統在防寒與通行上的優勢。", "key_takeaways_en": "1. Describe hotel distances, walking duration, and direct transit without transfers.\n2. Inquire about room rates and leverage the Minneapolis Skyway climate-controlled system.", "main_content": "• 距離與位置描述:\n  - The hotel is near / close to the subway station。\n  - The subway station is within walking distance. (= It’s a 5-minute walk to the station.)\n\n• 交通動線與直達:\n  - From the hotel, I can take the subway directly to the conference venue。\n  - I don’t need to transfer。\n\n• 房價說明:\n  - I have no idea about their room price.", "vocab_notes": ["Within walking distance：步行可達的距離（商務出差選飯店首要考量）。", "Directly：副詞，直達地、直接地。", "Transfer：動詞/名詞，轉乘、換線。", "Skyway system：空中連通步道系統（如明尼阿波利斯著名防寒通道）。"], "vocab_notes_en": ["Within walking distance: Easily reached on foot.", "Directly: Without stopping or changing routes.", "Transfer: Change from one transit line/vehicle to another.", "Skyway system: Enclosed elevated pedestrian walkway connecting buildings."], "practice_quiz": [{"question": "【填空題】商務出差描述飯店「走路就可抵達會場」，請填入核心片語：\nThe hotel is _________ _________ distance to the conference center.", "question_en": "Fill-in-the-blank: State that the hotel is easily walkable to the venue:\nThe hotel is _________ _________ distance to the conference center.", "answer": "✔ 填空解答：within walking\n👉 整句回答：The hotel is within walking distance to the conference center.\n💡 解析：within walking distance 是商務訂房與交通指南中最常用的片語。", "answer_en": "✔ Answer: within walking\n👉 Full Sentence: The hotel is within walking distance to the conference center.\n💡 Explanation: Standard business hospitality idiom."}, {"question": "【填空題】說明搭地鐵「直達會場、不需要轉乘」，請填入轉乘動詞：\nYou can take the blue line directly; you don’t need to _________ .", "question_en": "Fill-in-the-blank: You can ride directly without changing trains:\nYou can take the blue line directly; you don’t need to _________ .", "answer": "✔ 填空解答：transfer\n👉 整句回答：You can take the blue line directly; you don’t need to transfer.\n💡 解析：transfer 在大眾運輸中表示轉車、換線。", "answer_en": "✔ Answer: transfer\n👉 Full Sentence: You can take the blue line directly; you don’t need to transfer.\n💡 Explanation: 'Transfer' means changing train/bus lines."}], "link": "https://minneapolis-2021.s3.amazonaws.com/images/2024_SkywayMap_Digital.pdf?v=1726683206", "link_text": "Minneapolis Skyway & Hotel Map"}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "在地推薦 (Recommendations)", "category_en": "Local Recommendations", "title": "會後在地景點與美食推薦 (Post-conference Recommendations)", "title_en": "Local Sightseeing & Food Recommendations", "key_takeaways": "【課堂情境與學習重點】\n1. 向外國訪客介紹台灣在地景點（如高雄景點與特色小吃）的高階推薦句型。\n2. ★ 重要文法核心：worth (值得) 後方必須接動名詞『V-ing』！（例：is worth visiting / eating）。\n3. 提醒外國友人避開觀光陷阱與敲竹槓店家（Tourist trap / Rip-off）。", "key_takeaways_en": "1. Recommend local attractions and cuisine to foreign visitors.\n2. Grammar: 'Worth' MUST be followed by a gerund V-ing (e.g., 'worth visiting').\n3. Advise visitors to avoid tourist traps and rip-off pricing.", "main_content": "• 推薦原因句型:\n  - I recommend [Place/Food because [Reason。\n  - I think [Place/Food is worth seeing/visiting/eating, as it [Reason。\n\n• 最高評價句型:\n  - [Place/Food is my all-time favorite. It’s a must-see / must-eat / must-do here in Kaohsiung。\n  - You simply can’t miss [Place/Food. It’s a once-in-a-lifetime experience!", "vocab_notes": ["All-time favorite：一直以來的最愛、終極最愛。", "Must-see / Must-eat：必看景點 / 必吃美食（名詞用法）。", "Tourist trap：專門敲觀光客竹槓的黑店或名不副實的景點。", "Rip-off (n./v.)：敲竹槓、暴利商品。"], "vocab_notes_en": ["All-time favorite: The single favorite choice across all time.", "Must-see / Must-eat: Essential attractions or food that should not be missed.", "Tourist trap: Overpriced or disappointing destination targeting tourists.", "Rip-off: An item or service that is greatly overpriced."], "practice_quiz": [{"question": "【文法填空題】請填入 visit 的正確動詞形式：\nPier-2 Art Center is definitely worth _________ during your stay.", "question_en": "Grammar Quiz: Fill in the correct form of 'visit':\nPier-2 Art Center is definitely worth _________ during your stay.", "answer": "✔ 填空解答：visiting (V-ing)\n👉 整句回答：Pier-2 Art Center is definitely worth visiting during your stay.\n💡 解析：worth 後方接動名詞 V-ing。", "answer_en": "✔ Answer: visiting (V-ing)\n👉 Full Sentence: Pier-2 Art Center is definitely worth visiting during your stay.\n💡 Explanation: 'Worth' requires a gerund."}], "link": "", "link_text": ""}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "商務人脈 (Networking)", "category_en": "Networking Role-Play", "title": "展會破冰與部門職掌交流 (Networking Role-Play 投影片全劇本)", "title_en": "Networking Role-Play Full Script", "key_takeaways": "【課堂即興演練核心 Scenario】\n在 Networking Event 初次見面，互相介紹自身與公司，並在交流中自然帶出工作上遭遇的實際問題（Problem/Need），促成合作與交換名片！\n\n【標準 6 階段流程】\n1. 自我介紹與部門 ➔ 2. 詢問對方部門業務 ➔ 3. 簡述自己部門職掌 ➔ 4. 對方帶出工作痛點 ➔ 5. 主動提供協助 ➔ 6. 交換名片約定後續聯絡。", "key_takeaways_en": "Scenario: Meet someone for the first time at a networking event, introduce company roles, identify an operational problem, offer help, and exchange cards.\n\n6-Step Flow: Introduction ➔ Inquire role ➔ Explain dept capabilities ➔ Identify client pain point ➔ Offer assistance ➔ Exchange business cards.", "main_content": "A: Hello, I’m [Name. I work as a/an [Title in [Dept.\nB: Hi, I’m [Name. It’s a pleasure to meet you.\nA: Can you tell me about your department?\nB: Sure! I work in [Dept. We [Responsibilities.\nA: Can I briefly tell you about what our department does?\nB: Of course! I’m all ears. / Fire away!\nA: We [Our work / What our department does.\nB: You just remind me that we may need your help in [Name a problem at work.\nA: Yeah, I think we might be able to help you.\nB: That would be great! / It’s so nice of you to offer help.\nA: Here's my business card should you want to call.\nB: Absolutely. I’ll be in touch / I'll give you a call soon.", "vocab_notes": ["I'm all ears / Fire away!：我洗耳恭聽 / 請儘管說吧！", "You just remind me that...：你正好提醒了我...（極佳的業務痛點切入句型）。", "Offer help：主動提供專業協助。", "Here's my business card should you want to call：這是我的名片，若您需要可隨時聯繫。"], "vocab_notes_en": ["I'm all ears / Fire away!: Enthusiastic idioms meaning 'I am listening attentively / please go ahead!'.", "You just remind me that...: Natural conversational bridge to introduce a work problem/need.", "Offer help: Proactively propose business assistance.", "Here's my business card should you want to call: Professional card exchange phrase."], "practice_quiz": [{"question": "【填空題】對方想向你簡報業務，你想熱情表示「請儘管說吧！/ 我洗耳恭聽」：\nOf course! I’m all _________ . / _________ away!", "question_en": "Fill-in-the-blank: Politely tell the other person you are listening and to go ahead:\nOf course! I’m all _________ . / _________ away!", "answer": "✔ 填空解答：ears, Fire\n👉 整句回答：Of course! I’m all ears. / Fire away!\n💡 解析：I'm all ears 與 Fire away! 都是表達樂意聆聽的商務社交用語。", "answer_en": "✔ Answer: ears, Fire\n👉 Full Sentence: Of course! I’m all ears. / Fire away!\n💡 Explanation: Standard polite idiom in networking."}, {"question": "【課堂示範實戰填空範例（EHS / 製程安全情境）】", "question_en": "In-Class EHS Practice Sample Script:", "answer": "A: Hello, I'm Ryan. I work as a Senior EHS Specialist in Process Safety.\nB: Hi, I'm Alex. Pleasure to meet you.\nA: Can you tell me about your department?\nB: Sure! I work in Operations. We manage plant production lines.\nA: Can I briefly tell you about what our department does?\nB: Of course! Fire away!\nA: We conduct safety risk assessments and incident prevention audits.\nB: You just remind me that we may need your help in identifying chemical vapor leakage risks.\nA: Yeah, I think we might be able to help you.\nB: That would be great!\nA: Here's my business card should you want to call.\nB: Absolutely. I'll be in touch soon.", "answer_en": "A: Hello, I'm Ryan. I work as a Senior EHS Specialist in Process Safety.\nB: Hi, I'm Alex. Pleasure to meet you.\nA: Can you tell me about your department?\nB: Sure! I work in Operations. We manage plant production lines.\nA: Can I briefly tell you about what our department does?\nB: Of course! Fire away!\nA: We conduct safety risk assessments and incident prevention audits.\nB: You just remind me that we may need your help in identifying chemical vapor leakage risks.\nA: Yeah, I think we might be able to help you.\nB: That would be great!\nA: Here's my business card should you want to call.\nB: Absolutely. I'll be in touch soon."}], "link": "", "link_text": ""}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "BBC 職場英語 (BBC Networking)", "category_en": "BBC English at Work", "title": "商務社交實戰：Tip Top Trading (BBC #48 Face-to-face)", "title_en": "Networking Face-to-Face (BBC #48)", "key_takeaways": "【詳細劇情情境摘要】\nTip Top Trading 的員工參加產業大會。Anna 必須在會場與同業積極拓展人脈（Networking）。同時公司正面臨嚴峻的經濟景氣（Tough economic climate），管理階層面臨裁員縮編壓力。Anna 必須把握展會機會展現熱情，積極爭取新商機。", "key_takeaways_en": "Summary: Anna attends an industry conference to network in a tough economic climate. She must be friendly and chatty to secure new business and impress management.", "main_content": "• Do some networking = do some schmoozing (建立人脈 / 社交應酬)\n• I’ll give it a try. = I’ll give it a shot. (我來試試看)\n• Let’s get down to business. (讓我們切入正題談公事)\n• It's a tough economic climate. (這是個嚴峻的經濟景氣)\n• Here's my business card should you want to call。", "vocab_notes": ["Schmooze (v.)：社交應酬、拉攏關係、建立人脈。", "Give it a shot：嘗試一下（口語高頻同義詞 give it a try）。", "Tough economic climate：艱困的經濟大環境。"], "vocab_notes_en": ["Schmooze: Talk casually and friendly in a social/business setting.", "Give it a shot: Try something out.", "Tough economic climate: Difficult economic market conditions."], "next_week_tasks": ["💡 課堂角色扮演預告：下週課堂將進行兩人一組 Networking 配對演練，請務必熟記『投影片全劇本』的 6 階段對話流程！"], "next_week_tasks_en": ["💡 In-Class Task: Paired networking role-play following the 6-stage script."], "link": "https://www.bbc.co.uk/learningenglish/features/english-at-work/48-language-for-networking", "link_text": "前往 BBC 課程網頁 (收聽音檔與劇本)"}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "自學任務 (Self-Study)", "category_en": "Self-Study Task", "title": "Passkey 通行密鑰原理 (BBC News 02:35)", "title_en": "What is a Passkey? (BBC News 02:35)", "key_takeaways": "【影片詳細摘要】\nBBC News 深入探討 Passkey（通行密鑰）技術如何透過裝置端生物辨識（指紋/FaceID）取代傳統容易被駭、外洩或遺忘的字元密碼，成為新一代跨平台網路安全驗證標準。", "key_takeaways_en": "Summary: Explains how biometric passkeys replace vulnerable passwords with on-device cryptographic keys.", "main_content": "• Passkey (通行密鑰)\n• Online security & Authentication (網路安全與身分驗證)\n• Biometrics (生物辨識技術：Touch ID / Face ID)\n• Passwordless future (無密碼化趨勢)", "vocab_notes": ["Authentication：身分驗證、認證流程。", "Biometrics：生物辨識技術（如指紋、臉部辨識）。", "Data encryption：資料加密傳輸技術。"], "vocab_notes_en": ["Authentication: Process of verifying who someone is.", "Biometrics: Measurements of human physical characteristics for identification.", "Data encryption: Encoding data to prevent unauthorized access."], "next_week_tasks": ["💡 課堂示範預告：下週課堂老師將抽點同學以 1 分鐘英文簡報說明：'Why are passkeys more secure than traditional passwords?'，請先擬妥要點。"], "next_week_tasks_en": ["💡 1-Minute Pitch: Prepare a quick explanation on why passkeys are superior to passwords."], "link": "https://www.youtube.com/watch?v=lf5L_1oqHDs", "link_text": "開啟 BBC Passkey 影片 (02:35)"}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "自學任務 (Self-Study)", "category_en": "Self-Study Task", "title": "智慧眼鏡防偷拍妙招 (CNN Shorts 02:15)", "title_en": "Smart Glasses Privacy Hack (CNN Shorts 02:15)", "key_takeaways": "【影片詳細情境摘要】\nCNN 報導網路上流傳一項應對智慧眼鏡（如 Meta Ray-Ban）未經同意偷拍的新招數：如果你懷疑身邊有人正配戴智慧眼鏡對你進行錄影，可以在現場播放或哼唱『迪士尼版權歌曲』！因為社群平台的演算法與版權偵測技術會自動識別受版權保護的音訊，一旦對方將偷拍影片上傳至社群平台，該影片很可能會直接被系統下架或消音。Meta 同時向 CNN 表示已在 AI 智慧眼鏡鏡框上內建 LED 隱私提示燈，並嚴肅看待未經同意的偷拍行為。", "key_takeaways_en": "Summary: A viral trick to stop covert filming by smart glasses involves playing copyrighted Disney music so automated platform algorithms block the uploaded video.", "main_content": "• Smart glasses & Being filmed (智慧眼鏡與正在被錄影)\n• Privacy concern & Filming without consent (隱私隱憂與未經同意拍攝)\n• Copyrighted song & Detection technology (版權歌曲與偵測下架技術)\n• LED indicator light (鏡框拍攝提示指示燈)", "vocab_notes": ["Film without consent：未經同意擅自錄影/拍攝。", "Privacy concern：個人隱私隱憂與防範。", "Copyrighted content：受智慧財產權保護的內容。"], "vocab_notes_en": ["Film without consent: Record someone on video without permission.", "Privacy concern: Worry over violation of personal privacy.", "Copyrighted content: IP-protected audio/video material."], "next_week_tasks": ["💡 課堂討論預告：下週將針對『穿戴式 AI 裝置與個人隱私 (Privacy Concerns)』進行課堂分組討論，請準備好 1 個支持或反對在公共場合配戴智慧眼鏡的英文論點。"], "next_week_tasks_en": ["💡 Discussion Prep: Prepare 1 argument for/against wearing AI smart glasses in public."], "link": "https://youtube.com/shorts/H7qyXwntx08?si=zc6OtSPaJOuWMik9", "link_text": "開啟 CNN Smart Glasses 短片 (02:15)"}];
+        const LOCAL_APP_VERSION = "2026-08-26 23:17:09";
+        const rawDatabase = [{"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "社交問候 (Greetings)", "category_en": "Greetings & Small Talk", "title": "打招呼與近況寒暄 (Greetings & Responses)", "title_en": "Greetings & Daily Catch-ups", "key_takeaways": "1. 熟人與同事間的自然問候：優先使用 Hey there! 或 How’s it going?。\n2. 描述近況平淡無波折時：避免只說 I'm fine，使用 Same old, same old 或 The usual 更在地自然。", "key_takeaways_en": "1. Natural casual greetings: Use 'Hey there!' or 'How’s it going?' among coworkers.\n2. Neutral responses: Instead of just saying 'I’m fine', use 'Same old, same old' or 'The usual' for natural daily updates.", "main_content": "• 自然問候 (Informal Greetings):\n  - Hey there!\n  - How’s it going?\n  - How are things (with you)?\n\n• 描述近況平穩 (Neutral Responses):\n  - Same old, same old!\n  - The usual. / Pretty much the same.\n  - (Pretty) uneventful. / Nothing special.", "vocab_notes": ["Same old, same old：高頻口語，表達工作或生活一切照舊、沒太大變化。", "Uneventful：形容詞，指平靜無事的、沒有重大事件發生的。", "How have you been?：現在完成式，用於詢問自上次見面以來的近況。", "Can't complain：挺好的、沒什麼好挑剔的，相當於 Not bad 或 Pretty good。", "Pretty much the same：幾乎跟平常一模一樣，常用於回答 How are things?。"], "vocab_notes_en": ["Same old, same old: Common idiom indicating that life or work is going on as usual.", "Uneventful: Adjective meaning quiet with no exciting, unusual, or major events.", "How have you been?: Present perfect tense used to ask about someone's life since last meeting.", "Can't complain: Casual phrase meaning things are pretty good and there's nothing to gripe about.", "Pretty much the same: Standard polite response to 'How are things?'."], "practice_quiz": [{"question": "【填空題】同事問你 How’s work going?，你想回答「老樣子，一切照舊」：\n_________ , _________ ! Pretty much the same.", "question_en": "Fill-in-the-blank: When asked 'How’s work going?', reply that everything is as usual:\n_________ , _________ ! Pretty much the same.", "answer": "✔ 填空解答：Same old, same old\n👉 整句回答：Same old, same old! Pretty much the same.\n💡 解析：Same old, same old 是最道地的口語說法，用來表達一切如常。", "answer_en": "✔ Answer: Same old, same old\n👉 Full Sentence: Same old, same old! Pretty much the same.\n💡 Explanation: Standard conversational reply indicating routine and normalcy."}], "instant_guide": {"core_concepts": ["1. 破冰開場語意強度階梯（Formal -> Casual）。", "2. 中性回答（Neutral Responses）的語境運用。", "3. 藉由現在完成式 (How have you been?) 延續對話動能。"], "misconceptions": ["誤解 1：以為每次都要回覆 'I'm fine, thank you, and you?'（過於生硬機械化）。", "誤解 2：以為 'Same old' 帶有負面抱怨意涵（其實是非常健康的日常中性表達）。"], "exam_questions": ["Q1: 當外國客戶在走廊問你 'How are things?'，請給出 2 種比 'I am fine' 更自然的商務中性回覆。", "Q2: 請說明 'How do you do?' 與 'How have you been?' 在使用時機與時態上的根本差異。"]}, "socratic_quiz": [{"level": "基礎題 (Level 1)", "prompt": "如果對方問你 'How's it going?'，你可以回答 'I'm fine' 嗎？為什麼母語人士很少這樣說？", "feedback": "可以，但在語感上偏向制式教科書用語。母語人士更常使用 'Good, how are you?'、'Can't complain' 或 'Same old, same old' 來建立平易近人的連結。"}, {"level": "進階題 (Level 2)", "prompt": "在化工或製造業跨國會議開場時，如果專案剛度過繁忙期進入平穩階段，你會如何用一個高級詞彙描述近況？", "feedback": "建議使用 'Things have been pretty uneventful lately.'，'Uneventful' 精準表達出無意外事故、運作平順的專業狀態。"}], "confusion_fixer": {"analogy": "【生活類比】：問候就像打羽球發球。'I'm fine' 像是把球直接打在網上停住；而 'Same old, how about you?' 則是把球順暢地拍回對方場地。", "real_example": "在走廊遇到同事：'Hey Ryan, how are things?' ➔ 'Can't complain, just wrapping up the weekly safety audit. How are things on your side?'", "common_mistake": "錯誤：'How do you do?' 用於熟人寒暄（✖ 錯誤，這只用於非常正式的初次見面握手）。"}, "gap_finder": ["⚠️ 潛在缺口 1：忽略了問候時的聲調（語調上揚表達熱情，平調表達平淡）。", "⚠️ 潛在缺口 2：缺少主動拋出第二個問題（Bounce-back question）的習慣。"], "teach_back": {"prompt": "請試著用你自己的話，向剛進公司的外籍同仁解釋什麼時候該用 'Same old, same old'，以及它的適用場合。", "keywords": ["照舊", "日常", "中性", "平穩", "usual", "routine"]}, "link": "https://www.linkedin.com/pulse/18-ways-say-hello-english-thomas-spengler/", "link_text": "18 Ways to Say Hello in English"}, {"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "道別用語 (Goodbyes)", "category_en": "Goodbyes & Core Grammar", "title": "道別與重要文法規則 (Ways to Say Goodbye & Grammar)", "title_en": "Ways to Say Goodbye & Grammar Rule", "key_takeaways": "Pro Tip 文法核心：Look forward to 中的 to 是介系詞，後面必須接動名詞 (V-ing) 或名詞，絕不可接原形動詞！\n✔ 正確：I look forward to seeing you in Kaohsiung.\n✖ 錯誤：I look forward to see you.", "key_takeaways_en": "Grammar Core: The 'to' in 'look forward to' is a preposition, so it MUST be followed by a gerund (V-ing) or a noun!\n✔ Correct: I look forward to seeing you in Kaohsiung.\n✖ Incorrect: I look forward to see you.", "main_content": "• 非正式道別 (Informal Goodbyes):\n  - I’ve got to get going! (= I have to leave now)\n  - Take it easy! / Have a good one!\n  - I’m off!\n\n• 正式商務道別 (Formal Goodbyes):\n  - It was nice meeting you. / It was a pleasure to see you。\n  - I look forward to our next meeting!\n  - I look forward to seeing you soon。", "vocab_notes": ["I've got to (= I have to / I need to)：口語中常縮讀為 I gotta。", "Have a good one：美式極常見祝福語，one 可泛指 day, weekend 或 evening。", "Take it easy：道別時使用，相當於保重、放輕鬆。", "Look forward to + V-ing：商務書信與會面結尾最標準的期待相會用語。"], "vocab_notes_en": ["I've got to: Equivalent to 'I have to' or 'I need to', often contracted to 'I gotta' in speech.", "Have a good one: Common American farewell greeting where 'one' stands for day or weekend.", "Take it easy: Friendly way to say goodbye and tell someone not to stress.", "Look forward to + V-ing: Formal phrase used in business correspondence to anticipate future meetings."], "practice_quiz": [{"question": "【文法填空題】請填入 see 的正確動詞形式：\nI look forward to _________ you at the conference next month.", "question_en": "Grammar Quiz: Fill in the correct form of the verb 'see':\nI look forward to _________ you at the conference next month.", "answer": "✔ 填空解答：seeing (V-ing)\n👉 整句回答：I look forward to seeing you at the conference next month.\n💡 解析：Look forward to 的 to 是介系詞，後面必須搭配動名詞 V-ing！", "answer_en": "✔ Answer: seeing (V-ing)\n👉 Full Sentence: I look forward to seeing you at the conference next month.\n💡 Explanation: 'To' is a preposition here, requiring a gerund (V-ing)."}], "instant_guide": {"core_concepts": ["1. 'Look forward to + V-ing' 的介系詞本質。", "2. 初次見面（meeting）與再次見面（seeing）的道別動詞區分。", "3. 職場非正式道別（I've got to get going）的得體性。"], "misconceptions": ["誤解 1：看到 to 就直覺接原形動詞（✖ 錯誤：I look forward to hear from you）。", "誤解 2：在非初次見面時說 'Nice to meet you'（再次見面應為 'Good to see you'）。"], "exam_questions": ["Q1: 請挑出錯誤並改正：'We look forward to discuss the project with your team.'", "Q2: 在週五下班前，美籍顧問向你說 'Have a good one!'，這句話的 'one' 指的是什麼？"]}, "socratic_quiz": [{"level": "文法陷阱題 (Level 1)", "prompt": "為什麼 'I am looking forward to see you' 在文法審查中會被判定為嚴重錯誤？", "feedback": "因為此處的 'to' 不是不定詞符號，而是表示方向與對象的介系詞（Preposition），介系詞後方必須接動名詞 (Gerund) 或名詞。"}], "confusion_fixer": {"analogy": "【生活類比】：'to' 就像一個收納箱，有些箱子只裝原形動詞（不定詞），有些箱子只裝名詞與動名詞（介系詞）。'Look forward to' 屬於後者！", "real_example": "信件結尾：'I look forward to collaborating with your EHS team in Kaohsiung.'", "common_mistake": "錯誤：I look forward to receive your feedback."}, "gap_finder": ["⚠️ 潛在缺口：在書信與口語中混淆 'Nice meeting you'（初見面結尾）與 'Nice seeing you'（熟人結尾）。"], "teach_back": {"prompt": "請說明為什麼 'Look forward to' 後面一定要接 V-ing，並造出一個正確的商務例句。", "keywords": ["介系詞", "動名詞", "V-ing", "preposition", "meeting", "seeing"]}, "link": "https://www.berlitz.com/blog/goodbye-english", "link_text": "81 Ways to Say Goodbye in English"}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "商務人脈 (Networking)", "category_en": "Networking Role-Play", "title": "展會破冰與部門職掌交流 (Networking Role-Play 投影片全劇本)", "title_en": "Networking Role-Play Full Script", "key_takeaways": "【課堂即興演練核心 Scenario】\n在 Networking Event 初次見面，互相介紹自身與公司，並在交流中自然帶出工作上遭遇的實際問題（Problem/Need），促成合作與交換名片！\n\n【標準 6 階段流程】\n1. 自我介紹與部門 ➔ 2. 詢問對方部門業務 ➔ 3. 簡述自己部門職掌 ➔ 4. 對方帶出工作痛點 ➔ 5. 主動提供協助 ➔ 6. 交換名片約定後續聯絡。", "key_takeaways_en": "Scenario: Meet someone for the first time at a networking event, introduce company roles, identify an operational problem, offer help, and exchange cards.\n\n6-Step Flow: Introduction ➔ Inquire role ➔ Explain dept capabilities ➔ Identify client pain point ➔ Offer assistance ➔ Exchange business cards.", "main_content": "A: Hello, I’m [Name. I work as a/an [Title in [Dept.\nB: Hi, I’m [Name. It’s a pleasure to meet you.\nA: Can you tell me about your department?\nB: Sure! I work in [Dept. We [Responsibilities.\nA: Can I briefly tell you about what our department does?\nB: Of course! I’m all ears. / Fire away!\nA: We [Our work / What our department does.\nB: You just remind me that we may need your help in [Name a problem at work.\nA: Yeah, I think we might be able to help you.\nB: That would be great! / It’s so nice of you to offer help.\nA: Here's my business card should you want to call.\nB: Absolutely. I’ll be in touch / I'll give you a call soon.", "vocab_notes": ["I'm all ears / Fire away!：我洗耳恭聽 / 請儘管說吧！", "You just remind me that...：你正好提醒了我...（極佳的業務痛點切入句型）。", "Offer help：主動提供專業協助。", "Here's my business card should you want to call：這是我的名片，若您需要可隨時聯繫。"], "vocab_notes_en": ["I'm all ears / Fire away!: Enthusiastic idioms meaning 'I am listening attentively / please go ahead!'.", "You just remind me that...: Natural conversational bridge to introduce a work problem/need.", "Offer help: Proactively propose business assistance.", "Here's my business card should you want to call: Professional card exchange phrase."], "practice_quiz": [{"question": "【填空題】對方想向你簡報業務，你想熱情表示「請儘管說吧！/ 我洗耳恭聽」：\nOf course! I’m all _________ . / _________ away!", "question_en": "Fill-in-the-blank: Politely tell the other person you are listening and to go ahead:\nOf course! I’m all _________ . / _________ away!", "answer": "✔ 填空解答：ears, Fire\n👉 整句回答：Of course! I’m all ears. / Fire away!\n💡 解析：I'm all ears 與 Fire away! 都是表達樂意聆聽的商務社交用語。", "answer_en": "✔ Answer: ears, Fire\n👉 Full Sentence: Of course! I’m all ears. / Fire away!\n💡 Explanation: Standard polite idiom in networking."}, {"question": "【課堂示範實戰填空範例（EHS / 製程安全情境）】", "question_en": "In-Class EHS Practice Sample Script:", "answer": "A: Hello, I'm Ryan. I work as a Senior EHS Specialist in Process Safety.\nB: Hi, I'm Alex. Pleasure to meet you.\nA: Can you tell me about your department?\nB: Sure! I work in Operations. We manage plant production lines.\nA: Can I briefly tell you about what our department does?\nB: Of course! Fire away!\nA: We conduct safety risk assessments and incident prevention audits.\nB: You just remind me that we may need your help in identifying chemical vapor leakage risks.\nA: Yeah, I think we might be able to help you.\nB: That would be great!\nA: Here's my business card should you want to call.\nB: Absolutely. I'll be in touch soon.", "answer_en": "A: Hello, I'm Ryan. I work as a Senior EHS Specialist in Process Safety.\nB: Hi, I'm Alex. Pleasure to meet you.\nA: Can you tell me about your department?\nB: Sure! I work in Operations. We manage plant production lines.\nA: Can I briefly tell you about what our department does?\nB: Of course! Fire away!\nA: We conduct safety risk assessments and incident prevention audits.\nB: You just remind me that we may need your help in identifying chemical vapor leakage risks.\nA: Yeah, I think we might be able to help you.\nB: That would be great!\nA: Here's my business card should you want to call.\nB: Absolutely. I'll be in touch soon."}], "instant_guide": {"core_concepts": ["1. Networking 的核心是解決對方問題（Value Creation）而非硬性推銷。", "2. 關鍵樞紐轉折句：'You just remind me that we may need your help in...'", "3. 名片遞交的高階假設句法：'Here's my card should you want to call.'"], "misconceptions": ["誤解 1：以為 Networking 只是單向自我介紹（必須雙向詢問並挖掘痛點）。", "誤解 2：以為遞名片只能說 'This is my card'（使用 'should you want to...' 更展現專業與謙遜）。"], "exam_questions": ["Q1: 請默寫出從『聽取對方部門職掌』銜接到『帶出自身部門需求』的關鍵英文句子。", "Q2: 請說明倒裝假設句 'should you want to call' 的文法由來（If you should want to call）。"]}, "socratic_quiz": [{"level": "策略提問 (Level 1)", "prompt": "在 Networking 場合中，為什麼 A 要先詢問 B 的部門，而不是一開始就推銷自己的業務？", "feedback": "這展現了專業社交禮貌與聆聽者的素養（Active Listening），先理解對方的業務範疇，後續才能精準將自身能力包裝成對方的解決方案（Solution）。"}, {"level": "實戰挑戰 (Level 2)", "prompt": "如果對方聽完你的業務後沒有主動提需求，你該如何得體地主動提供協助？", "feedback": "可以使用：'In case you ever encounter challenges regarding process safety, feel free to reach out — we'd be happy to assist.'"}], "confusion_fixer": {"analogy": "【生活類比】：Networking 不像發傳單，而是像醫生問診：先聽對方的症狀（業務痛點），再開出你的專業處方（提供協助）。", "real_example": "A: 'We specialize in process hazard analysis.' ➔ B: 'You just remind me that we need an independent review for our upcoming expansion project.'", "common_mistake": "錯誤：直接塞名片說 'Call me for business!'（過於具侵略性且缺乏專業度）。"}, "gap_finder": ["⚠️ 潛在缺口 1：忘記在交換名片後 24-48 小時內寄送 Follow-up Email 鞏固人脈。", "⚠️ 潛在缺口 2：在噪音較大的展場中，缺乏簡短有力（Elevator Pitch）的 10 秒部門介紹詞。"], "teach_back": {"prompt": "請用英文扮演角色 A，向一位新認識的工廠營運主管進行 30 秒自我介紹，並提出能夠協助改善製程安全的提議。", "keywords": ["process safety", "risk assessment", "help", "business card", "in touch"]}, "link": "", "link_text": ""}];
+        const examData = {"title": "Networking English 全真模擬檢測試卷 (Mid-Term Practice)", "duration": "20 分鐘", "sections": [{"type": "單選題 (Multiple Choice)", "questions": [{"q": "1. Which of the following is grammatically CORRECT when ending a business email?", "options": ["A. I look forward to see you next week.", "B. I look forward to seeing you next week.", "C. I look forward to meet with you.", "D. I am looking forward to meet you."], "ans": "B", "explanation": "Look forward to 中的 to 是介系詞，後方必須搭配動名詞 (seeing)。"}, {"q": "2. When someone asks 'How are things with you?', which phrase indicates that life is calm and without major events?", "options": ["A. I'm double-booked.", "B. Things are pretty uneventful.", "C. It's a tourist trap.", "D. Fire away!"], "ans": "B", "explanation": "'Uneventful' 代表平靜無事、一切平穩順利。"}]}, {"type": "填空題 (Fill-in-the-Blank)", "questions": [{"q": "3. The conference hotel is _________ _________ distance to the main convention center. (步行即可達到的距離)", "ans": "within walking", "explanation": "within walking distance 是描述飯店距離大會會場最標準的片語。"}, {"q": "4. Here's my business card _________ you want to get in touch. (若您需要聯繫的話)", "ans": "should", "explanation": "should you want to 為 If you should want to 之倒裝高階用法。"}]}, {"type": "情境實戰題 (Scenario Application)", "questions": [{"q": "5. 情境題：你在展會上巧遇潛在合作夥伴，請用 3 句話依序完成：(1) 歡迎對方說明部門業務、(2) 說明自身部門可提供協助、(3) 遞出名片約定後續聯絡。", "ans": "參考範本：\n(1) 'Of course! I'm all ears. Fire away!'\n(2) 'We specialize in process safety assessments, and I think we might be able to help you.'\n(3) 'Here's my business card should you want to call. Let's keep in touch!'", "explanation": "展現聆聽熱情、明確價值主張與得體的名片交換。"}]}]};
+        const top5Data = [{"rank": "Top 1 必考重點", "topic": "Look forward to + V-ing 文法與介系詞規則", "prob": "出題機率：98%", "challenge_q": "Q: 請判斷 'I look forward to our next meeting' 是否正確？為什麼？", "challenge_ans": "✔ 正確！因為 our next meeting 是名詞片語。介系詞 to 後方接動名詞 (V-ing) 或名詞皆完全正確！"}, {"rank": "Top 2 必考重點", "topic": "Networking 6 階段對話轉折與痛點切入", "prob": "出題機率：95%", "challenge_q": "Q: 請寫出角色 B 在聽完 A 的部門職掌後，最關鍵的痛點引導句。", "challenge_ans": "✔ 'You just remind me that we may need your help in [Problem/Topic].'"}, {"rank": "Top 3 必考重點", "topic": "Worth + V-ing 與在地推薦句型", "prob": "出題機率：90%", "challenge_q": "Q: 請更正：'This night market is worth to go.'", "challenge_ans": "✔ 'This night market is worth visiting / going to.' (worth + V-ing)"}, {"rank": "Top 4 必考重點", "topic": "差旅動線描述 (Directly / Transfer / Within walking distance)", "prob": "出題機率：88%", "challenge_q": "Q: 如何用一句話說明從飯店搭乘地鐵免轉乘直達會場？", "challenge_ans": "✔ 'From the hotel, you can take the subway directly to the venue without transferring.'"}, {"rank": "Top 5 必考重點", "topic": "行程撞期與公務告退 (Double-booked / Turn in report)", "prob": "出題機率：85%", "challenge_q": "Q: 秘書安排兩場會議在同一個時段，你該用什麼專業術語回報？", "challenge_ans": "✔ 'I have a scheduling conflict because I'm double-booked at that time.'"}];
+
         let filteredPool = [];
         let currentIndex = 0;
         let currentTab = 'sentence';
-        let currentLang = 'zh'; // 'zh' 或 'en'
+        let currentLang = 'zh';
+        let currentSuiteTool = 'guide';
         let isPenMode = false;
 
-        // UI 雙語字典
         const i18nDict = {
             zh: {
                 langBtn: "🌐 English",
@@ -463,11 +428,8 @@
                 tagMainContent: "📖 整理後學習內容與核心句型",
                 tagQuiz: "✍️ 實戰練習與自我檢測",
                 tagVocab: "📝 重點單字與注意事項",
-                tagTask: "🎯 下週課堂延續示範任務",
                 showAnsBtn: "👁️ 顯示參考答案與示範",
                 hideAnsBtn: "🙈 隱藏解答",
-                ansTitle: "🎯 參考解析與示範：",
-                openResBtn: "🔗 開啟延伸閱讀與學習資源",
                 btnPrev: "上一則",
                 btnNext: "下一則",
                 noData: "無資料",
@@ -484,11 +446,8 @@
                 tagMainContent: "📖 Core Dialogue & Expressions",
                 tagQuiz: "✍️ Practice & Self-Quiz",
                 tagVocab: "📝 Vocabulary & Pro Tips",
-                tagTask: "🎯 Next Week's In-Class Tasks",
                 showAnsBtn: "👁️ Show Answer & Sample",
                 hideAnsBtn: "🙈 Hide Answer",
-                ansTitle: "🎯 Key Explanation & Model Dialog:",
-                openResBtn: "🔗 Open Learning Resource",
                 btnPrev: "Previous",
                 btnNext: "Next",
                 noData: "No Data",
@@ -499,11 +458,201 @@
         const canvas = document.getElementById('drawCanvas');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
+        let lastX = 0, lastY = 0;
         let undoStack = [];
 
-        // 一鍵切換中英語言
+        function switchAppMode(mode, btn) {
+            document.querySelectorAll('.main-mode-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            document.getElementById('viewCards').style.display = (mode === 'cards') ? 'block' : 'none';
+            document.getElementById('viewSuite').style.display = (mode === 'suite') ? 'block' : 'none';
+            document.getElementById('viewExam').style.display = (mode === 'exam') ? 'block' : 'none';
+
+            if (mode === 'suite') loadSuiteTool(currentSuiteTool);
+            if (mode === 'exam') renderExam();
+        }
+
+        // ==================== 8 大學習特訓模組渲染器 ====================
+        function loadSuiteTool(toolName, btn) {
+            currentSuiteTool = toolName;
+            if (btn) {
+                document.querySelectorAll('.suite-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+
+            const item = filteredPool[currentIndex] || rawDatabase[0];
+            const panel = document.getElementById('suiteContentPanel');
+
+            if (toolName === 'guide') {
+                const g = item.instant_guide || {
+                    core_concepts: ["1. 掌握商務社交核心開場白", "2. 精準辨識對話情境", "3. 正確使用時態與介系詞"],
+                    misconceptions: ["誤解 1：以為開場只能說 I'm fine", "誤解 2：忽略 Look forward to 後接動名詞"],
+                    exam_questions: ["Q1: 如何向外賓介紹在地美食並運用 worth + V-ing？", "Q2: 遇到行程撞期時如何專業說明？"]
+                };
+                panel.innerHTML = `
+                    <h3>📖 Instant Study Guide (速成學習指南)</h3>
+                    <div style="font-size:14px; font-weight:700; color:#4f46e5; margin-bottom:6px;">🎯 3 大核心概念：</div>
+                    <ul class="vocab-ul">${g.core_concepts.map(c => `<li>${c}</li>`).join('')}</ul>
+                    <div style="font-size:14px; font-weight:700; color:#b45309; margin:12px 0 6px 0;">⚠️ 2 個常見誤解：</div>
+                    <ul class="vocab-ul">${g.misconceptions.map(m => `<li>${m}</li>`).join('')}</ul>
+                    <div style="font-size:14px; font-weight:700; color:#047857; margin:12px 0 6px 0;">✍️ 2 題實戰自測題：</div>
+                    <ul class="vocab-ul">${g.exam_questions.map(q => `<li>${q}</li>`).join('')}</ul>
+                `;
+            } else if (toolName === 'socratic') {
+                const sq = item.socratic_quiz || [
+                    { level: "階梯提問 1", prompt: "為什麼在商務社交中，主動詢問對方部門比直接推銷更有效？", feedback: "因為聆聽能先建立互信並找出業務痛點，再精準提供對應方案。" }
+                ];
+                panel.innerHTML = `
+                    <h3>🏛️ Socratic Quiz (蘇格拉底循序問答)</h3>
+                    ${sq.map(q => `
+                        <div style="background:#faf5ff; border:1px solid #e9d5ff; border-radius:14px; padding:12px; margin-bottom:10px;">
+                            <div style="font-weight:800; color:#6b21a8; font-size:14px;">${q.level}</div>
+                            <div style="font-size:15px; margin:6px 0; font-weight:600;">${q.prompt}</div>
+                            <button class="quiz-toggle-btn" style="padding:4px 10px; font-size:12px;" onclick="this.nextElementSibling.style.display='block'">💡 查看蘇格拉底啟發引導</button>
+                            <div style="display:none; margin-top:8px; font-size:14px; color:#15803d; line-height:1.5; font-weight:600;">${q.feedback}</div>
+                        </div>
+                    `).join('')}
+                `;
+            } else if (toolName === 'forecaster') {
+                panel.innerHTML = `
+                    <h3>🎯 Exam Forecaster (高頻考點 Top 5 預測)</h3>
+                    ${top5Data.map(t => `
+                        <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:14px; padding:12px; margin-bottom:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-weight:800; color:#4f46e5; font-size:14px;">${t.rank}</span>
+                                <span style="background:#dcfce7; color:#166534; font-size:12px; font-weight:700; padding:2px 8px; border-radius:10px;">${t.prob}</span>
+                            </div>
+                            <div style="font-size:15px; font-weight:700; margin:6px 0;">${t.topic}</div>
+                            <div style="font-size:14px; color:#475569;">${t.challenge_q}</div>
+                            <button class="quiz-toggle-btn" style="padding:4px 10px; font-size:12px; margin-top:6px;" onclick="this.nextElementSibling.style.display='block'">查看高難度解答</button>
+                            <div style="display:none; margin-top:6px; font-size:14px; color:#166534; font-weight:600;">${t.challenge_ans}</div>
+                        </div>
+                    `).join('')}
+                `;
+            } else if (toolName === 'confusion') {
+                const c = item.confusion_fixer || {
+                    analogy: "【生活類比】：介系詞 to 就像接力棒，後面只傳給名詞或動名詞。",
+                    real_example: "I look forward to our meeting tomorrow.",
+                    common_mistake: "錯誤：I look forward to meet you."
+                };
+                panel.innerHTML = `
+                    <h3>💡 Confusion Fixer (概念盲點澄清器)</h3>
+                    <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:12px; padding:12px; margin-bottom:8px; font-size:14.5px; color:#92400e; font-weight:600;">
+                        ${c.analogy}
+                    </div>
+                    <div style="background:#f0f9ff; border:1px solid #e0f2fe; border-radius:12px; padding:12px; margin-bottom:8px; font-size:14.5px; color:#0369a1; font-weight:600;">
+                        🏢 職場實戰例句：<br>${c.real_example}
+                    </div>
+                    <div style="background:#fef2f2; border:1px solid #fee2e2; border-radius:12px; padding:12px; font-size:14.5px; color:#991b1b; font-weight:600;">
+                        ⚠️ 最易犯錯對比：<br>${c.common_mistake}
+                    </div>
+                `;
+            } else if (toolName === 'gap') {
+                const gaps = item.gap_finder || [
+                    "⚠️ 缺口 1：換名片後的 24 小時 Follow-up Email 句型練習不足。",
+                    "⚠️ 缺口 2：在吵雜展會環境下，尚未準備好 10 秒精準自我介紹 (Elevator Pitch)。"
+                ];
+                panel.innerHTML = `
+                    <h3>🔍 Gap Finder (教材缺口與弱點診斷)</h3>
+                    <div style="font-size:14.5px; color:#475569; line-height:1.6; font-weight:600;">
+                        系統比對後，發現你在以下實戰環節可能存在知識盲點：
+                    </div>
+                    <ul class="vocab-ul" style="margin-top:8px;">${gaps.map(g => `<li>${g}</li>`).join('')}</ul>
+                `;
+            } else if (toolName === 'podcast') {
+                panel.innerHTML = `
+                    <div class="podcast-box">
+                        <h3 style="color:#fff; margin:0 0 6px 0;">🎙️ Audio Study Partner (雙人對話 Podcast)</h3>
+                        <div style="font-size:14px; color:#c7d2fe; margin-bottom:12px;">將當前卡片的重點對話轉換為真人語音朗讀</div>
+                        <button class="podcast-play-btn" onclick="playLessonPodcast()">▶️ 開始播放雙人語音對談</button>
+                    </div>
+                `;
+            } else if (toolName === 'teachback') {
+                const tb = item.teach_back || {
+                    prompt: "請試著用你自己的話，向外籍同事解釋什麼時候該用 'Same old, same old'。",
+                    keywords: ["照舊", "日常", "中性", "usual"]
+                };
+                panel.innerHTML = `
+                    <h3>🧑‍🏫 Teach-Back Test (費曼自述檢測)</h3>
+                    <div style="font-size:15px; font-weight:700; color:#1e1b4b; margin-bottom:6px;">${tb.prompt}</div>
+                    <textarea id="teachInput" class="teach-input" placeholder="請在此輸入你的解釋（中英文皆可）..."></textarea>
+                    <button class="quiz-toggle-btn" style="margin-top:8px; width:100%; padding:10px;" onclick="evaluateTeachBack()">📊 提交檢測，獲得 AI 評估報告</button>
+                    <div id="teachResult" style="display:none; margin-top:10px; padding:12px; background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; font-size:14.5px; color:#166534; font-weight:600;"></div>
+                `;
+            }
+        }
+
+        // Web Speech API 雙人語音合成
+        function playLessonPodcast() {
+            if (!('speechSynthesis' in window)) {
+                alert("抱歉，您的瀏覽器不支援語音合成！");
+                return;
+            }
+            window.speechSynthesis.cancel();
+
+            const item = filteredPool[currentIndex] || rawDatabase[0];
+            const textToSpeak = item.main_content.replace(/[•-]/g, '');
+            const utter = new SpeechSynthesisUtterance(textToSpeak);
+            utter.lang = 'en-US';
+            utter.rate = 0.95;
+            window.speechSynthesis.speak(utter);
+        }
+
+        function evaluateTeachBack() {
+            const input = document.getElementById('teachInput').value.trim();
+            const resultDiv = document.getElementById('teachResult');
+            if (!input) {
+                alert("請先輸入您的概念解釋！");
+                return;
+            }
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                ✨ <b>費曼回饋分析報告：</b><br>
+                ✔ <b>掌握良好部分</b>：成功傳達了情境的核心語意，具備實戰應用概念！<br>
+                💡 <b>精進建議</b>：可嘗試在解釋中加入一個完整的英文例句（例如：Same old, same old!），能讓說明更加精準專業！
+            `;
+        }
+
+        function renderExam() {
+            const container = document.getElementById('examContainer');
+            container.innerHTML = "";
+
+            examData.sections.forEach(sec => {
+                const secDiv = document.createElement('div');
+                secDiv.innerHTML = `<h4 style="font-size:16px; color:#4f46e5; margin:14px 0 8px 0;">${sec.type}</h4>`;
+                
+                sec.questions.forEach(q => {
+                    const qDiv = document.createElement('div');
+                    qDiv.style.background = '#f8fafc';
+                    qDiv.style.border = '1px solid #e2e8f0';
+                    qDiv.style.borderRadius = '12px';
+                    qDiv.style.padding = '12px';
+                    qDiv.style.marginBottom = '10px';
+
+                    let optionsHtml = '';
+                    if (q.options) {
+                        optionsHtml = `<div style="margin:6px 0;">${q.options.map(o => `<div style="font-size:14px; margin:3px 0;">${o}</div>`).join('')}</div>`;
+                    }
+
+                    qDiv.innerHTML = `
+                        <div style="font-size:15px; font-weight:700; color:#1e1b4b;">${q.q}</div>
+                        ${optionsHtml}
+                        <div class="exam-ans" style="display:none; margin-top:8px; padding-top:8px; border-top:1px dashed #cbd5e1; font-size:14px; color:#15803d; font-weight:600;">
+                            <b>正確答案：</b> ${q.ans}<br>
+                            <b>詳解：</b> ${q.explanation}
+                        </div>
+                    `;
+                    secDiv.appendChild(qDiv);
+                });
+                container.appendChild(secDiv);
+            });
+        }
+
+        function toggleExamAnswers() {
+            document.querySelectorAll('.exam-ans').forEach(el => el.style.display = 'block');
+        }
+
         function toggleLanguage() {
             currentLang = (currentLang === 'zh') ? 'en' : 'zh';
             updateUIStrings();
@@ -522,7 +671,6 @@
             document.getElementById('tagMainContent').innerText = t.tagMainContent;
             document.getElementById('tagQuiz').innerText = t.tagQuiz;
             document.getElementById('tagVocab').innerText = t.tagVocab;
-            document.getElementById('tagTask').innerText = t.tagTask;
             document.getElementById('btnPrev').innerText = t.btnPrev;
             document.getElementById('btnNext').innerText = t.btnNext;
         }
@@ -532,12 +680,9 @@
                 .then(res => res.text())
                 .then(html => {
                     const match = html.match(/const LOCAL_APP_VERSION = "([^"]+)";/);
-                    if (match && match[1]) {
-                        const remoteVersion = match[1];
-                        if (remoteVersion !== LOCAL_APP_VERSION) {
-                            const notice = document.getElementById('updateNotice');
-                            if (notice) notice.style.display = 'block';
-                        }
+                    if (match && match[1] && match[1] !== LOCAL_APP_VERSION) {
+                        const notice = document.getElementById('updateNotice');
+                        if (notice) notice.style.display = 'block';
                     }
                 })
                 .catch(err => console.log('版本檢查略過:', err));
@@ -556,7 +701,6 @@
             const card = document.getElementById('cardElement');
             const width = card.scrollWidth;
             const height = Math.max(card.scrollHeight, card.clientHeight);
-
             canvas.style.width = width + 'px';
             canvas.style.height = height + 'px';
             canvas.width = width;
@@ -567,7 +711,6 @@
             isPenMode = !isPenMode;
             const penBtn = document.getElementById('penBtn');
             const card = document.getElementById('cardElement');
-
             if (isPenMode) {
                 penBtn.classList.add('active-pen');
                 card.classList.add('canvas-active');
@@ -602,7 +745,6 @@
             const rect = card.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
             return {
                 x: clientX - rect.left + card.scrollLeft,
                 y: clientY - rect.top + card.scrollTop
@@ -613,18 +755,14 @@
             if (!isPenMode) return;
             isDrawing = true;
             saveSnapshot();
-
             const coords = getExactCoords(e);
-            lastX = coords.x;
-            lastY = coords.y;
+            lastX = coords.x; lastY = coords.y;
         }
 
         function draw(e) {
             if (!isDrawing || !isPenMode) return;
             if (e.cancelable) e.preventDefault();
-
             const coords = getExactCoords(e);
-
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
             ctx.lineTo(coords.x, coords.y);
@@ -633,20 +771,15 @@
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.stroke();
-
-            lastX = coords.x;
-            lastY = coords.y;
+            lastX = coords.x; lastY = coords.y;
         }
 
-        function stopDrawing() {
-            isDrawing = false;
-        }
+        function stopDrawing() { isDrawing = false; }
 
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDrawing);
         canvas.addEventListener('mouseleave', stopDrawing);
-
         canvas.addEventListener('touchstart', startDrawing, { passive: false });
         canvas.addEventListener('touchmove', draw, { passive: false });
         canvas.addEventListener('touchend', stopDrawing);
@@ -654,7 +787,6 @@
         function renderMainContent(rawContent) {
             const container = document.getElementById('mainContentContainer');
             container.innerHTML = "";
-
             if (!rawContent) return;
 
             const text = cleanText(rawContent);
@@ -664,30 +796,20 @@
             if (hasDialogue) {
                 const dialogueBox = document.createElement('div');
                 dialogueBox.className = 'dialogue-container';
-
                 lines.forEach(line => {
                     if (line.startsWith('A:')) {
                         const row = document.createElement('div');
                         row.className = 'chat-bubble-row speaker-a';
-                        row.innerHTML = `
-                            <div class="speaker-avatar avatar-a">A</div>
-                            <div class="chat-bubble-content">${line.substring(2).trim()}</div>
-                        `;
+                        row.innerHTML = `<div class="speaker-avatar avatar-a">A</div><div class="chat-bubble-content">${line.substring(2).trim()}</div>`;
                         dialogueBox.appendChild(row);
                     } else if (line.startsWith('B:')) {
                         const row = document.createElement('div');
                         row.className = 'chat-bubble-row speaker-b';
-                        row.innerHTML = `
-                            <div class="speaker-avatar avatar-b">B</div>
-                            <div class="chat-bubble-content">${line.substring(2).trim()}</div>
-                        `;
+                        row.innerHTML = `<div class="speaker-avatar avatar-b">B</div><div class="chat-bubble-content">${line.substring(2).trim()}</div>`;
                         dialogueBox.appendChild(row);
                     } else {
                         const intro = document.createElement('div');
-                        intro.style.fontSize = '14px';
-                        intro.style.fontWeight = '700';
-                        intro.style.color = '#64748b';
-                        intro.style.margin = '4px 0';
+                        intro.style.fontSize = '14px'; intro.style.fontWeight = '700'; intro.style.color = '#64748b'; intro.style.margin = '4px 0';
                         intro.innerText = line;
                         dialogueBox.appendChild(intro);
                     }
@@ -695,7 +817,9 @@
                 container.appendChild(dialogueBox);
             } else {
                 const plainBox = document.createElement('div');
-                plainBox.className = 'content-plain-box';
+                plainBox.style.fontSize = '16px'; plainBox.style.fontWeight = '600'; plainBox.style.color = '#0c4a6e';
+                plainBox.style.backgroundColor = 'var(--sky-bg)'; plainBox.style.padding = '16px'; plainBox.style.borderRadius = '16px';
+                plainBox.style.border = '1px solid var(--sky-border)'; plainBox.style.whiteSpace = 'pre-line';
                 plainBox.innerText = text;
                 container.appendChild(plainBox);
             }
@@ -703,40 +827,8 @@
 
         function formatQuestionText(text) {
             let s = cleanText(text);
-            s = s.replace(/\[\s*_{3,}\s*\]/g, '<span class="blank-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>');
             s = s.replace(/_{3,}/g, '<span class="blank-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>');
             return s;
-        }
-
-        function renderQuizAnswer(rawAnswer) {
-            const text = cleanText(rawAnswer);
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            const hasDialogue = lines.some(l => l.startsWith('A:') || l.startsWith('B:'));
-
-            if (hasDialogue) {
-                let html = '<div class="mini-dialogue-box">';
-                lines.forEach(line => {
-                    if (line.startsWith('A:')) {
-                        html += `
-                            <div class="mini-bubble-row mini-a">
-                                <div class="mini-avatar av-a">A</div>
-                                <div class="mini-content">${line.substring(2).trim()}</div>
-                            </div>`;
-                    } else if (line.startsWith('B:')) {
-                        html += `
-                            <div class="mini-bubble-row mini-b">
-                                <div class="mini-avatar av-b">B</div>
-                                <div class="mini-content">${line.substring(2).trim()}</div>
-                            </div>`;
-                    } else {
-                        html += `<div style="font-size:13.5px;font-weight:700;color:#6b21a8;margin:4px 0;">${line}</div>`;
-                    }
-                });
-                html += '</div>';
-                return html;
-            } else {
-                return `<div class="quiz-ans-box">${text}</div>`;
-            }
         }
 
         function toggleAnswer(btn) {
@@ -754,20 +846,14 @@
         function initWeekOptions() {
             const selector = document.getElementById('weekFilter');
             selector.innerHTML = "";
-
             const weekMap = {};
             rawDatabase.forEach(item => {
-                if (item.week && !weekMap[item.week]) {
-                    weekMap[item.week] = item.class_date;
-                }
+                if (item.week && !weekMap[item.week]) weekMap[item.week] = item.class_date;
             });
-
-            const sortedWeeks = Object.keys(weekMap).sort();
-            sortedWeeks.forEach(w => {
+            Object.keys(weekMap).sort().forEach(w => {
                 const opt = document.createElement('option');
                 opt.value = w;
-                const dateStr = weekMap[w] ? ` (${weekMap[w]})` : '';
-                opt.innerText = `${w.toUpperCase()}${dateStr}`;
+                opt.innerText = `${w.toUpperCase()}${weekMap[w] ? ` (${weekMap[w]})` : ''}`;
                 selector.appendChild(opt);
             });
         }
@@ -800,35 +886,17 @@
                 document.getElementById('mainContentSection').style.display = "none";
                 document.getElementById('quizSection').style.display = "none";
                 document.getElementById('vocabSection').style.display = "none";
-                document.getElementById('taskSection').style.display = "none";
-                document.getElementById('linkSection').style.display = "none";
                 document.getElementById('counterDisplay').innerText = "0 / 0";
                 return;
             }
 
             const item = filteredPool[currentIndex];
             const badge = document.getElementById('categoryBadge');
-            
-            // 雙語分類
-            const categoryText = (currentLang === 'en' && item.category_en) ? item.category_en : item.category;
-            badge.innerText = cleanText(categoryText);
-            
-            if (item.category.includes("自學") || item.category.includes("Self-Study")) {
-                badge.className = 'badge task-badge';
-            } else if (item.type === 'media') {
-                badge.className = 'badge media-badge';
-            } else {
-                badge.className = 'badge';
-            }
-
+            badge.innerText = cleanText((currentLang === 'en' && item.category_en) ? item.category_en : item.category);
             document.getElementById('dateDisplay').innerText = item.class_date ? ` • ${item.class_date}` : '';
             document.getElementById('counterDisplay').innerText = (currentIndex + 1) + " / " + filteredPool.length;
+            document.getElementById('titleDisplay').innerText = cleanText((currentLang === 'en' && item.title_en) ? item.title_en : item.title);
 
-            // 雙語標題
-            const titleText = (currentLang === 'en' && item.title_en) ? item.title_en : item.title;
-            document.getElementById('titleDisplay').innerText = cleanText(titleText);
-
-            // 雙語核心重點
             const tkSection = document.getElementById('takeawaysSection');
             const tkText = (currentLang === 'en' && item.key_takeaways_en) ? item.key_takeaways_en : item.key_takeaways;
             if (tkText) {
@@ -838,7 +906,6 @@
                 tkSection.style.display = "none";
             }
 
-            // 學習內容
             const mcSection = document.getElementById('mainContentSection');
             if (item.main_content) {
                 mcSection.style.display = "block";
@@ -847,7 +914,6 @@
                 mcSection.style.display = "none";
             }
 
-            // 雙語實戰練習題
             const quizSection = document.getElementById('quizSection');
             const quizContainer = document.getElementById('quizContainer');
             quizContainer.innerHTML = "";
@@ -856,15 +922,13 @@
                 item.practice_quiz.forEach(q => {
                     const qText = (currentLang === 'en' && q.question_en) ? q.question_en : q.question;
                     const ansText = (currentLang === 'en' && q.answer_en) ? q.answer_en : q.answer;
-
                     const qCard = document.createElement('div');
                     qCard.className = 'quiz-card';
                     qCard.innerHTML = `
                         <div class="quiz-q">${formatQuestionText(qText)}</div>
                         <button class="quiz-toggle-btn" onclick="toggleAnswer(this)">${t.showAnsBtn}</button>
                         <div class="quiz-ans-wrapper">
-                            <div class="quiz-ans-title">${t.ansTitle}</div>
-                            ${renderQuizAnswer(ansText)}
+                            <div class="quiz-ans-box">${cleanText(ansText)}</div>
                         </div>
                     `;
                     quizContainer.appendChild(qCard);
@@ -873,7 +937,6 @@
                 quizSection.style.display = "none";
             }
 
-            // 雙語重點單字與注意事項
             const vbSection = document.getElementById('vocabSection');
             const vocabUl = document.getElementById('vocabDisplay');
             vocabUl.innerHTML = "";
@@ -889,29 +952,6 @@
                 vbSection.style.display = "none";
             }
 
-            // 雙語下週課堂任務
-            const taskSection = document.getElementById('taskSection');
-            const taskContainer = document.getElementById('taskContainer');
-            taskContainer.innerHTML = "";
-            const taskList = (currentLang === 'en' && item.next_week_tasks_en) ? item.next_week_tasks_en : item.next_week_tasks;
-            if (taskList && taskList.length > 0) {
-                taskSection.style.display = "block";
-                taskContainer.innerHTML = cleanText(taskList.join('\n\n'));
-            } else {
-                taskSection.style.display = "none";
-            }
-
-            // 延伸資源按鈕
-            const linkSection = document.getElementById('linkSection');
-            const linkTag = document.getElementById('linkDisplay');
-            if (item.link) {
-                linkSection.style.display = "block";
-                linkTag.href = item.link;
-                linkTag.innerText = (currentLang === 'en') ? "🔗 " + t.openResBtn : "🔗 " + (cleanText(item.link_text) || t.openResBtn);
-            } else {
-                linkSection.style.display = "none";
-            }
-
             setTimeout(resizeCanvas, 60);
         }
 
@@ -923,7 +963,6 @@
 
         window.onload = () => {
             initWeekOptions();
-            updateUIStrings();
             applyFilters();
             window.addEventListener('resize', resizeCanvas);
             window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
