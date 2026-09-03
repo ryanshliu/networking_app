@@ -2,6 +2,9 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Networking English - AI Learning Suite</title>
     <style>
@@ -47,6 +50,12 @@
             background: transparent; color: var(--text-muted); cursor: pointer;
         }
         .main-mode-btn.active { background: #ffffff; color: var(--primary); box-shadow: 0 3px 10px rgba(79, 70, 229, 0.15); }
+        .pen-toolbar { display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+        .tool-btn {
+            background-color: #ffffff; border: 1.5px solid #cbd5e1; padding: 6px 12px;
+            border-radius: 20px; font-size: 13px; font-weight: 700; color: var(--text-muted); cursor: pointer;
+        }
+        .tool-btn.active-pen { background-color: #ffe4e6; border-color: #e11d48; color: #e11d48; }
         .filters { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
         select {
             width: 100%; box-sizing: border-box; padding: 13px 16px; font-size: 16px; font-weight: 700;
@@ -66,6 +75,8 @@
             padding: 22px 18px; box-sizing: border-box; display: flex; flex-direction: column;
             max-height: 68vh; overflow-y: auto; border: 1px solid var(--border-color);
         }
+        #drawCanvas { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 100; }
+        .card.canvas-active #drawCanvas { pointer-events: auto; touch-action: none; }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .badge { font-size: 12.5px; font-weight: 700; padding: 5px 12px; border-radius: 20px; background-color: var(--primary-soft); color: var(--primary); }
         .badge.media-badge { background-color: #fef3c7; color: #92400e; }
@@ -81,8 +92,43 @@
         .tag-emerald { background-color: var(--emerald-bg); color: var(--emerald-text); border: 1px solid var(--emerald-border); }
         .tag-violet { background-color: var(--violet-bg); color: var(--violet-text); border: 1px solid var(--violet-border); }
         .block-desc { font-size: 15.5px; color: var(--text-body); line-height: 1.65; margin: 0; white-space: pre-line; }
+        
+        .dialogue-container { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+        .chat-bubble-row { display: flex; align-items: flex-start; gap: 8px; width: 100%; }
+        .chat-bubble-row.speaker-b { flex-direction: row-reverse; }
+        .speaker-avatar {
+            width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 13.5px; font-weight: 800; color: #ffffff; flex-shrink: 0; margin-top: 4px;
+        }
+        .speaker-avatar.avatar-a { background: #2563eb; }
+        .speaker-avatar.avatar-b { background: #7c3aed; }
+        .chat-bubble-content {
+            max-width: 82%; padding: 11px 15px; border-radius: 16px; font-size: 15.5px; line-height: 1.5; font-weight: 600;
+        }
+        .speaker-a .chat-bubble-content { background-color: var(--bubble-a-bg); border: 1.5px solid var(--bubble-a-border); }
+        .speaker-b .chat-bubble-content { background-color: var(--bubble-b-bg); border: 1.5px solid var(--bubble-b-border); }
+        
         .vocab-ul { margin: 0; padding-left: 20px; font-size: 15px; color: var(--text-body); line-height: 1.7; }
         .vocab-ul li { margin-bottom: 10px; line-height: 1.6; }
+        .highlight-term { color: #3730a3 !important; font-weight: 800 !important; }
+        .ipa-tag { color: #6d28d9; font-weight: 700; margin: 0 2px; }
+
+        .quiz-card {
+            background-color: var(--violet-bg); border: 1.5px solid var(--violet-border);
+            border-radius: 18px; padding: 16px; margin-bottom: 12px;
+        }
+        .quiz-q { font-size: 15.5px; font-weight: 700; color: #4c1d95; line-height: 1.6; margin-bottom: 10px; }
+        .blank-line { display: inline-block; min-width: 80px; border-bottom: 2.5px solid #7c3aed; margin: 0 4px; }
+        .quiz-toggle-btn {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: #ffffff; border: none; padding: 7px 16px; border-radius: 12px; font-size: 13.5px; font-weight: 700; cursor: pointer;
+        }
+        .quiz-ans-wrapper { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #d8b4fe; }
+        .quiz-ans-box {
+            background: #ffffff; padding: 12px 14px; border-radius: 14px; border: 1.5px solid #bbf7d0;
+            font-size: 15px; color: #14532d; line-height: 1.65; white-space: pre-line; font-weight: 600;
+        }
+
         .link-box { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border-color); text-align: left; }
         .link-btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; box-sizing: border-box;
@@ -90,6 +136,38 @@
             background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
             text-decoration: none; font-weight: 700; border-radius: 14px;
         }
+
+        /* 8 大模式 UI */
+        .suite-scope-nav { display: flex; gap: 6px; background-color: #f1f5f9; padding: 4px; border-radius: 14px; margin-bottom: 10px; }
+        .suite-scope-btn {
+            flex: 1; padding: 8px 4px; font-size: 13px; font-weight: 800; border: none; border-radius: 10px;
+            background: transparent; color: var(--text-muted); cursor: pointer;
+        }
+        .suite-scope-btn.active { background: #ffffff; color: var(--primary); }
+        .suite-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+        .suite-btn {
+            background: #ffffff; border: 1.5px solid #cbd5e1; padding: 10px 8px; border-radius: 14px;
+            font-size: 13px; font-weight: 800; color: #334155; cursor: pointer; text-align: left;
+        }
+        .suite-btn.active { background: #eef2ff; border-color: #6366f1; color: #4338ca; }
+        .suite-panel { background: #ffffff; border: 1.5px solid var(--border-color); border-radius: 20px; padding: 18px; }
+
+        .podcast-box {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            color: #ffffff; padding: 20px 16px; border-radius: 20px; text-align: center;
+        }
+        .podcast-controls {
+            display: flex; flex-direction: column; gap: 10px; align-items: center; margin: 12px 0;
+            background: rgba(0, 0, 0, 0.25); padding: 14px; border-radius: 16px;
+        }
+        .control-row { display: flex; align-items: center; justify-content: space-between; width: 100%; font-size: 13.5px; color: #c7d2fe; }
+        .accent-select { background: #ffffff; color: #1e1b4b; font-weight: 800; padding: 6px 10px; border-radius: 10px; border: none; }
+        .podcast-play-btn {
+            background: #10b981; color: #fff; border: none; padding: 13px 26px; border-radius: 24px;
+            font-size: 15.5px; font-weight: 800; cursor: pointer;
+        }
+        .podcast-play-btn.playing { background: #ef4444 !important; }
+
         .nav-controls { width: 100%; display: flex; gap: 12px; margin-top: 12px; }
         .nav-btn { flex: 1; padding: 15px; font-size: 17px; font-weight: 700; border: none; border-radius: 16px; cursor: pointer; }
         .btn-prev { background-color: #e2e8f0; color: #334155; }
@@ -100,13 +178,20 @@
     <div class="app-layout">
         <div class="header">
             <h1>Networking English</h1>
-            <div class="author-badge">By Ryan Liu, V1.8</div>
+            <div class="author-badge">By Ryan Liu, V1.9</div>
             <div class="main-mode-nav">
                 <button class="main-mode-btn active" onclick="switchAppMode('cards', this)">📚 學習卡片</button>
+                <button class="main-mode-btn" onclick="switchAppMode('suite', this)">⚡ 8大學習模組</button>
                 <button class="main-mode-btn" onclick="switchAppMode('exam', this)">📝 全真模擬考</button>
+            </div>
+            <div class="pen-toolbar">
+                <button id="penBtn" class="tool-btn" onclick="togglePenMode()">🖍️ 細畫筆</button>
+                <button class="tool-btn" onclick="undoLastStroke()">↩️ 復原</button>
+                <button class="tool-btn" onclick="clearAllCanvas()">🗑️ 全清</button>
             </div>
         </div>
 
+        <!-- 視圖 1: 學習卡片模式 -->
         <div id="viewCards">
             <div class="filters">
                 <select id="weekFilter" onchange="applyFilters()"></select>
@@ -118,10 +203,12 @@
 
             <div class="card-container">
                 <div class="card" id="cardElement">
+                    <canvas id="drawCanvas"></canvas>
                     <div>
                         <div class="card-header">
                             <div>
                                 <span class="badge" id="categoryBadge">分類</span>
+                                <span style="font-size: 12.5px; color: #64748b;" id="dateDisplay"></span>
                             </div>
                             <span class="counter" id="counterDisplay">0 / 0</span>
                         </div>
@@ -134,17 +221,27 @@
 
                         <div class="block-section" id="mainContentSection">
                             <div class="tag-title tag-sky">📖 學習內容與核心對話</div>
-                            <div id="mainContentContainer" class="block-desc"></div>
+                            <div id="mainContentContainer"></div>
+                        </div>
+
+                        <div class="block-section" id="quizSection">
+                            <div class="tag-title tag-violet">✍️ 實戰練習題</div>
+                            <div id="quizContainer"></div>
                         </div>
 
                         <div class="block-section" id="vocabSection">
                             <div class="tag-title tag-emerald">📝 重點單字與注意事項</div>
                             <ul class="vocab-ul" id="vocabDisplay"></ul>
                         </div>
+
+                        <div class="block-section" id="taskSection">
+                            <div class="tag-title tag-violet">🎯 下週課堂延續示範任務</div>
+                            <div id="taskContainer" class="block-desc"></div>
+                        </div>
                     </div>
 
                     <div class="link-box" id="linkSection">
-                        <a class="link-btn" id="linkDisplay" href="#" target="_blank">🔗 開啟連結</a>
+                        <a class="link-btn" id="linkDisplay" href="#" target="_blank">🔗 開啟延伸學習資源</a>
                     </div>
                 </div>
             </div>
@@ -155,6 +252,26 @@
             </div>
         </div>
 
+        <!-- 視圖 2: 8 大特訓模組 -->
+        <div id="viewSuite" style="display: none;">
+            <div class="suite-scope-nav">
+                <button id="scopeCurrentBtn" class="suite-scope-btn active" onclick="setSuiteScope('current', this)">📌 當前選定週次</button>
+                <button id="scopeAllBtn" class="suite-scope-btn" onclick="setSuiteScope('all', this)">🌐 全部課程大整合</button>
+            </div>
+
+            <div class="suite-grid">
+                <button class="suite-btn active" onclick="loadSuiteTool('guide', this)">📖 速成指南</button>
+                <button class="suite-btn" onclick="loadSuiteTool('socratic', this)">🏛️ 蘇格拉底問答</button>
+                <button class="suite-btn" onclick="loadSuiteTool('forecaster', this)">🎯 考點預測 Top5</button>
+                <button class="suite-btn" onclick="loadSuiteTool('confusion', this)">💡 盲點澄清器</button>
+                <button class="suite-btn" onclick="loadSuiteTool('gap', this)">🔍 知識缺口診斷</button>
+                <button class="suite-btn" onclick="loadSuiteTool('podcast', this)">🎙️ Audio Podcast</button>
+            </div>
+
+            <div class="suite-panel" id="suiteContentPanel"></div>
+        </div>
+
+        <!-- 視圖 3: 全真模擬考卷 -->
         <div id="viewExam" style="display: none;">
             <div class="card" style="max-height: 75vh;">
                 <h2 style="font-size: 20px; color: #1e1b4b; margin-top:0;">📝 Networking English 全真模擬檢測試卷</h2>
@@ -164,41 +281,382 @@
     </div>
 
     <script>
-        const rawDatabase = [{"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "社交問候 (Greetings)", "category_en": "Greetings & Small Talk", "title": "初次見面與熟人寒暄", "title_en": "Greetings & Daily Catch-ups", "key_takeaways": "【教材重點】\n1. 詢問近況的道地句型：How is it going? / How are things with you?[cite: 1]\n2. 萬用中性回答：Same old, same old. / Pretty much the same. / Can not complain.[cite: 1]", "key_takeaways_en": "Master natural casual updates and formal business greetings.", "main_content": "A: Hi, my name is John. And you are?\nB: I am Ryan. I am from IT.\nA: How is it going?\nB: Pretty good. And you?\nA: Can not complain. Oops, I have got to go. See you around.\nB: Sure! Have a good one![cite: 1]", "vocab_notes": ["Same old, same old [sem old] (片語)：老樣子、一切照舊[cite: 1]。", "Uneventful [ˌʌnɪˈvɛntfəl] (adj.)：平靜無事的[cite: 1]。", "【課堂延伸】Pickup line (n.)：搭訕用語。", "【課堂延伸】Please be seated (句型)：請入座。", "【課堂延伸】See ya (片語)：再見 (口語)。", "【課堂延伸】Catch up with someone (片語)：與某人敘舊。"], "vocab_notes_en": ["Same old, same old: Common idiom indicating routine.[cite: 1]"], "practice_quiz": [{"question": "【填空題】老樣子，一切照舊：\n_________ , _________ !", "answer": "✔ 填空解答：Same old, same old[cite: 1]"}], "link": "https://www.linkedin.com/pulse/18-ways-say-hello-english-thomas-spengler/", "link_text": "18 Ways to Say Hello in English[cite: 1]"}, {"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "道別用語 (Goodbyes)", "category_en": "Goodbyes & Core Grammar", "title": "道別與核心文法規則", "title_en": "Ways to Say Goodbye & Grammar Rule", "key_takeaways": "【教材重點】\n1. 走廊告退：I have got to get going / Take it easy / Have a good one[cite: 1]。\n2. 多益必考文法：Look forward to + V-ing（to 是介系詞）[cite: 1]。", "key_takeaways_en": "Informal vs Formal goodbyes, and grammar rule for 'Look forward to'[cite: 1].", "main_content": "A: I have got to get going! I look forward to our next meeting.\nB: Take it easy! Have a good one!\nA: It was a pleasure to see you.\nB: I look forward to seeing you soon in Kaohsiung.[cite: 1]", "vocab_notes": ["Take it easy (idiom)：保重、放輕鬆[cite: 1]。", "【課堂延伸】Exit vs Exist (v.)：離開/出口 vs 存在 (易混淆字)。"], "vocab_notes_en": ["Take it easy: Relax and be well.[cite: 1]"], "link": "https://www.berlitz.com/blog/goodbye-english", "link_text": "81 Ways to Say Goodbye in English[cite: 1]"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "影音自習 (BP 5.4.1)", "category_en": "Video Self-Study", "title": "商務社交情境：巴黎會面", "title_en": "Business Socializing in Paris (BP A2 5.4.1)", "key_takeaways": "【教材重點】\n1. 抵達與住宿：When did you arrive? / Where are you staying?[cite: 1]\n2. 肢體語言：Roll one's eyes / Make a face / Wink[cite: 1]。", "key_takeaways_en": "Summary: Julia arrives in Paris. Learn past tense for arrivals[cite: 1].", "main_content": "A: When did you arrive in Paris?\nB: I flew in yesterday afternoon. Traffic from the airport was heavy.\nA: Where are you staying?\nB: At the Mason Park Hotel. It is a 5-minute walk to the venue.\nA: Do you have plans for dinner tonight?\nB: Count me in![cite: 1]", "vocab_notes": ["Venue [ˈvɛnju] (n.)：會場、舉辦地點[cite: 1]。", "【課堂延伸】Facial [ˈfeʃəl] (adj.)：臉部的。", "【課堂延伸】Micro-expression (n.)：微表情。", "【課堂延伸】His facial expression otherwise (句型)：他的臉部表情透露了別的意思。"], "vocab_notes_en": ["Venue: The place where an event happens.[cite: 1]"], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/Bus_Part_A2_U5L4_5.4.1.mp4", "link_text": "觀看 BP 5.4.1 影片[cite: 2]"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "官方腳本閱讀 (BP Script)", "category_en": "Video Script Reading", "title": "BP 5.4.1 影音腳本對照", "title_en": "Video Script for BP A2", "key_takeaways": "【學習指引】請參閱腳本第 3 頁對照影片 5.4.1 進行學習[cite: 2]。", "key_takeaways_en": "Read the script for video 5.4.1 on page 3[cite: 2].", "main_content": "• 請開啟下方連結閱讀對話文字稿，強化聽讀連結[cite: 2]。", "vocab_notes": ["Transcript (n.)：文字稿。"], "vocab_notes_en": ["Transcript: A written record.[cite: 2]"], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/Bus_Part_A2_Video.pdf", "link_text": "閱讀 BP A2 影音腳本 (Page 3)[cite: 2]"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "聽力與發音特訓 (BP WB 5.5)", "category_en": "Audio Self-Study", "title": "展會心得聽力特訓", "title_en": "Trade Fair Impressions (BP Audio 5.5)", "key_takeaways": "【聽力檢測】\n1. Did Amy and Marta arrive on the same day?[cite: 1]\n2. What did Victor think about the presentation?[cite: 1]", "key_takeaways_en": "Listen and identify discrepancies in travel times.[cite: 1]", "main_content": "A: What did Amy think about the conference center? What did she like?\nB: She liked the presentations.[cite: 1]", "vocab_notes": ["【課堂延伸】Dash [dæʃ] (n.)：破折號 (-)。", "【課堂延伸】Hyphen [ˈhaɪfən] (n.)：連字號 (-)。", "【課堂延伸】5-minute (adj.)：五分鐘的 (加上連字號)。", "【課堂延伸】Under score / Underline emphasize：底線 (_)、畫底線強調。"], "vocab_notes_en": ["Dash/Hyphen: Punctuation marks used to separate words or syllables."], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/BP_A2_WB_5_05.mp3", "link_text": "聆聽 BP Workbook 5.5 音檔[cite: 2]"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "BBC 職場入門 (BBC Intro)", "category_en": "BBC Introduction", "title": "面試技巧與辦公室生存", "title_en": "BBC English at Work: An Introduction", "key_takeaways": "【影片重點】\n1. 職場強項表達：This job is an ideal match for my skills.[cite: 1]\n2. 行程衝突：I have got two meetings scheduled at the same time. I am double-booked![cite: 1]", "key_takeaways_en": "Anna interviews at a plastic fruit company.[cite: 1]", "main_content": "A: Can you tell me about yourself?\nB: I get on with people easily. I want to be a part of that.[cite: 1]\nA: There is a problem with my timetable. I am double-booked.[cite: 1]", "vocab_notes": ["Double-booked (adj.)：同一時間被重複預約[cite: 1]。", "【課堂延伸】Recruit (n./v.)：新進員工；招募。", "【課堂延伸】Employee (n.)：員工。", "【課堂延伸】Over hear / Eavesdrop (v.)：無意間聽到 / 偷聽。", "【課堂延伸】Plastic fruit sector / industry：塑膠水果產業。", "【課堂延伸】Prestigious / Famous (adj.)：有聲望的 / 著名的。"], "vocab_notes_en": ["Double-booked: Having two commitments at the same time.[cite: 1]"], "link": "https://www.bbc.co.uk/learningenglish/english/features/english-at-work/english-at-work-intro", "link_text": "觀看 BBC Intro[cite: 2]"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "口語特訓 (Papa Teach Me)", "category_en": "YouTube Self-Study", "title": "Stop Saying 'I am fine'", "title_en": "Alternatives to 'How are you?'", "key_takeaways": "【自學任務】學習 15 種回答 How are you 的替代說法，以及當對方生病時的 5 種關心用語[cite: 1]。", "key_takeaways_en": "Learn alternatives to 'I am fine, thank you. And you?'[cite: 1].", "main_content": "• Watch the video and practice the alternative responses.[cite: 1]", "vocab_notes": ["Alternatives (n.)：替代方案[cite: 1]。", "【課堂延伸】Composite (adj./n.)：混合的/合成物。"], "vocab_notes_en": ["Alternatives: Available as another possibility.[cite: 1]"], "link": "https://www.youtube.com/watch?v=f259lQdMo2s", "link_text": "觀看 Papa Teach Me 影片[cite: 2]"}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "差旅交通 (Accommodation)", "category_en": "Travel & Logistics", "title": "研討會住宿與地鐵動線", "title_en": "Conference Transit & Hotel Proximity", "key_takeaways": "【教材重點】\n1. 描述距離：within walking distance[cite: 3]。\n2. 說明搭乘交通工具：take the subway directly[cite: 3]。", "key_takeaways_en": "Expressing walkability and direct subway transit[cite: 3].", "main_content": "A: The hotel is near the subway station and within walking distance.[cite: 3]\nB: From the hotel, can I take the subway directly to the conference venue?[cite: 3]\nA: Yes, you can take the Blue Line directly. You do not need to transfer.[cite: 3]", "vocab_notes": ["Within walking distance (phr.)：步行可達的距離[cite: 3]。", "Transfer (v.)：轉乘[cite: 3]。", "【課堂延伸】Near / close to / nearby：靠近、在附近。"], "vocab_notes_en": ["Transfer: Change from one vehicle or line to another.[cite: 3]"], "link": "https://minneapolis-2021.s3.amazonaws.com/images/2024_SkywayMap_Digital.pdf?v=1726683206", "link_text": "Minneapolis Skyway Map (PDF)[cite: 3]"}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "推薦與觀光 (Recommendations)", "category_en": "Food & Places", "title": "在地美食與景點推薦", "title_en": "Recommending Food and Places", "key_takeaways": "【教材重點】\n1. 推薦句型：I recommend ___ because ___ / I think ___ is worth seeing.[cite: 3]\n2. 必用語：It is a must-see / must-eat.[cite: 3]\n3. 避開陷阱：Tourist trap vs Tourist attraction, Rip-off[cite: 3]。", "key_takeaways_en": "Recommending local food and avoiding tourist traps[cite: 3].", "main_content": "A: I recommend Kaohsiung because the food is amazing.[cite: 3]\nB: You simply can not miss it! It is a once-in-a-lifetime experience![cite: 3]\nA: But be careful of the tourist trap, it is a total rip-off![cite: 3]", "vocab_notes": ["Tourist trap (n.)：坑遊客的地方[cite: 3]。", "Rip-off (n.)：敲竹槓[cite: 3]。", "【課堂延伸】Be worth seeing：值得一看。", "【課堂延伸】Rice noodle, Hakka dishes, roasted duck wrap, crepe, mutton fried rice, lamb chop：在地美食單字。", "【課堂延伸】Cut guava：切好的芭樂。", "【課堂延伸】Accessible, Cuisine：容易到達的、料理。", "【課堂延伸】Bed & breakfast / B&B, food court：民宿、美食街。", "【課堂延伸】Out-of-towner：外地人。"], "vocab_notes_en": ["Tourist trap: A place that attracts and overcharges tourists.[cite: 3]"], "practice_quiz": [{"question": "【填空題】這是一個坑遊客的地方：\nIt is a _________ _________.", "answer": "✔ 填空解答：tourist trap[cite: 3]"}], "link": "", "link_text": ""}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "展會破冰 (Networking)", "category_en": "Networking Role-Play", "title": "展會破冰與部門職掌交流", "title_en": "Networking Role-Play", "key_takeaways": "【教材重點】\n6 階段交際：自我介紹 ➔ 問對方部門 ➔ 簡述己方職掌 ➔ 帶出痛點 (You just remind me that...) ➔ 提供協助 ➔ 交換名片 (Here is my business card should you want to call.)[cite: 3]。", "key_takeaways_en": "6-Stage Networking Script[cite: 3].", "main_content": "A: Can I briefly tell you about what our department does?[cite: 3]\nB: Of course! I am all ears. Fire away![cite: 3]\nA: You just remind me that we may need your help in...[cite: 3]\nB: Here is my business card should you want to call.[cite: 3]", "vocab_notes": ["I am all ears (idiom)：我洗耳恭聽[cite: 3]。", "Fire away (idiom)：請說吧[cite: 3]。", "【課堂延伸】Networking / socializing：建立人脈 / 社交。"], "vocab_notes_en": ["Fire away: Permission to start speaking.[cite: 3]"], "link": "", "link_text": ""}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "BBC 職場自習 (BBC Networking)", "category_en": "BBC Networking Self-Study", "title": "商務社交實戰：Tip Top Trading", "title_en": "Networking Face-to-Face (BBC #48)", "key_takeaways": "【教材重點】\n經濟不景氣 (Tough economic climate) 下的社交：I will give it a shot / Let’s get down to business[cite: 3]。", "key_takeaways_en": "Summary: Networking in a tough economic climate[cite: 3].", "main_content": "A: Do some networking and do some schmoozing with new clients.[cite: 3]\nB: I will give it a shot. Let’s get down to business.[cite: 3]\nA: It is a tough economic climate, we need to be rid of one member of staff.[cite: 3]", "vocab_notes": ["Schmooze (v.)：社交應酬[cite: 3]。", "【課堂延伸】I heard you were in town / out of town：聽說你在鎮上 / 出城。", "【課堂延伸】Get down to business：開始談正事。", "【課堂延伸】Smashing / amazing：極好的。", "【課堂延伸】Mouldy / mold：發霉的。", "【課堂延伸】Biscuit / cookie, a wedge of cheese：餅乾、一塊起司。", "【課堂延伸】Sore loser：輸不起的人。", "【課堂延伸】Sort this out / sort this company out：解決問題 / 整頓公司。", "【課堂延伸】Crumbs / my god：我的天啊。", "【課堂延伸】Bad news go down with them：他們無法接受這壞消息。", "【課堂延伸】Inappropriate：不得體的。"], "vocab_notes_en": ["Schmooze: Talk casually and friendly.[cite: 3]"], "link": "https://www.bbc.co.uk/learningenglish/english/features/english-at-work/48-language-for-networking", "link_text": "前往 BBC #48 課程網頁[cite: 4]"}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "科技與隱私自習 (Tech & Privacy)", "category_en": "Tech & Privacy Self-Study", "title": "Passkey 與智慧眼鏡防偷拍", "title_en": "Passkeys & Smart Glasses Hack", "key_takeaways": "【自習任務】\n1. 了解 Passkey 如何成為未來的網路安全解答[cite: 4]。\n2. 了解如何防止被 Smart Glasses 偷拍[cite: 4]。", "key_takeaways_en": "Explore biometric passkeys and privacy hacks[cite: 4].", "main_content": "• Watch the videos about Passkey and Smart Glasses to learn new tech vocabulary.[cite: 4]", "vocab_notes": ["【課堂延伸】Biometrics：生物辨識。", "【課堂延伸】Encryption：加密。", "【課堂延伸】Identify：辨識。", "【課堂延伸】Fraud：詐騙。", "【課堂延伸】Harass：騷擾。", "【課堂延伸】Consent：同意。", "【課堂延伸】Copyright from infringement：侵犯版權。", "【課堂延伸】Inevitably：不可避免地。"], "vocab_notes_en": ["Passkey: A digital credential.[cite: 4]"], "link": "https://www.youtube.com/watch?v=lf5L_1oqHDs", "link_text": "觀看 BBC Passkey 影片[cite: 4]"}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "CNN 短片 (Smart Glasses)", "category_en": "CNN Shorts", "title": "Smart Glasses 隱私防範", "title_en": "Smart Glasses Privacy Hack", "key_takeaways": "【自習任務】觀看 CNN 短片，了解智慧眼鏡偷拍的防範方法[cite: 4]。", "key_takeaways_en": "Learn to avoid being filmed by smart glasses[cite: 4].", "main_content": "• If You Think You’re Being Filmed by Smart Glasses, Try This[cite: 4]", "vocab_notes": ["【課堂延伸】Filmed：被拍攝。"], "vocab_notes_en": ["Film: To record on camera.[cite: 4]"], "link": "https://youtube.com/shorts/H7qyXwntx08?si=zc6OtSPaJOuWMik9", "link_text": "觀看 CNN Smart Glasses 影片[cite: 4]"}, {"week": "week3", "class_date": "2026/09/02", "type": "sentence", "category": "工作日常與職責 (Work Routine)", "category_en": "Work Routine & Duties", "title": "日常工作職責與頻率副詞", "title_en": "Work Routine & Frequency Adverbs", "key_takeaways": "【教材重點】\n1. 詢問職業：What do you do for a living? / I am responsible for...[cite: 6]\n2. 分析數據與報告：analyze data / write reports[cite: 6]。\n3. 頻率副詞：never, rarely, sometimes, occasionally, often, usually, always[cite: 6]。", "key_takeaways_en": "Describing daily responsibilities and frequency adverbs[cite: 6].", "main_content": "A: What do you do for a living?[cite: 6]\nB: I am responsible for a team of 5 people.[cite: 6]\nA: What does your typical workday look like?[cite: 6]\nB: I analyze sales data, and I often write reports.[cite: 6]", "vocab_notes": ["Responsible for (adj.)：負責的[cite: 6]。", "Analyze (v.)：分析[cite: 6]。", "Rarely (adv.)：很少[cite: 6]。", "【課堂延伸】介紹自己工作的日常。", "【課堂延伸】Sometimes, sometime, some time：有時候、某個時候、一段時間。", "【課堂延伸】WFH (Work From Home)：在家工作。", "【課堂延伸】Cycle to and from：騎腳踏車上下班。", "【課堂延伸】Resolve inter-departmental conflicts：解決跨部門衝突。", "【課堂延伸】Track milestone：追蹤里程碑。", "【課堂延伸】Collect：收集。", "【課堂延伸】Chief executive officer：執行長。", "【課堂延伸】Sri Lanka：斯里蘭卡。"], "vocab_notes_en": ["Responsible for: In charge of.[cite: 6]"], "practice_quiz": [{"question": "【填空題】He works _________. (努力工作)[cite: 6]", "answer": "✔ 填空解答：hard[cite: 6]"}], "link": "", "link_text": ""}, {"week": "week3", "class_date": "2026/09/02", "type": "sentence", "category": "線上會議 (Virtual Meetings)", "category_en": "Online Meetings", "title": "線上會議填空與比較", "title_en": "Online Meetings Pros & Cons", "key_takeaways": "【教材重點】\n1. 會議文件：budget, agenda, update, presentation[cite: 6]。\n2. 會議型態比較：Online meeting vs face-to-face meeting 的優缺點[cite: 6]。", "key_takeaways_en": "Meeting vocabulary and comparing meeting types[cite: 6].", "main_content": "A: The agenda says the meeting starts at 10 a.m.[cite: 6]\nB: Please calculate the costs before the meeting.[cite: 6]\nA: Can you give me an update on it?[cite: 6]", "vocab_notes": ["Agenda (n.)：議程[cite: 6]。", "Budget (n.)：預算[cite: 6]。", "【課堂延伸】Brief：簡報/摘要。", "【課堂延伸】Figure / number / do the math：數字 / 計算。", "【課堂延伸】Online meeting / face-to-face meeting：線上會議 / 實體會議。", "【課堂延伸】Pros / cons：優點 / 缺點。", "【課堂延伸】Get distributed easily / concentrated easily：容易分心 (應為 distracted) / 容易專注。", "【課堂延伸】Time consumption：耗時。", "【課堂延伸】Hidden agenda / push one's agenda：隱藏意圖 / 推動某人計畫。"], "vocab_notes_en": ["Agenda: A list of items to be discussed.[cite: 6]"], "link": "", "link_text": ""}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "官方影音自習 (BP Video 1.1.1)", "category_en": "Official Video 1.1.1", "title": "日常工作描述 (BP Video 1.1.1)", "title_en": "Business Partner A2 Video 1.1.1", "key_takeaways": "【聽力任務】\n比較 Liz、Ellen 與 Muj 的工作開始時間、出差頻率與日常職責[cite: 6]。", "key_takeaways_en": "Watch Video 1.1.1 and compare work routines[cite: 6].", "main_content": "• 聽力精選對話句型:\nA: Who starts work at 7:30?[cite: 6]\nB: Liz does. She processes orders for the sales team.[cite: 6]\nA: Who analyses data and writes reports?[cite: 6]\nB: Muj does.[cite: 6]", "vocab_notes": ["Process orders (v. phr.)：處理訂單[cite: 6]。", "Take notes (v. phr.)：做筆記[cite: 6]。", "【課堂延伸】Sign on the dotted line：在虛線上簽名 (正式簽約)。"], "vocab_notes_en": ["Process orders: To handle requests.[cite: 6]"], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/Bus_Part_A2_U1L1_1.1.1.mp4", "link_text": "觀看 BP Video 1.1.1[cite: 5]"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "腳本閱讀 (BP Script)", "category_en": "Video Script Reading", "title": "BP Video Script (Video 1.1.1)", "title_en": "BP Video Script PDF", "key_takeaways": "【閱讀任務】請參閱腳本第 1 頁，閱讀 Video 1.1.1 完整對白文字檔[cite: 5]。", "key_takeaways_en": "Read Video Script 1.1.1 on page 1[cite: 5].", "main_content": "• 請開啟 PDF 檔案對照聽力[cite: 5]。", "vocab_notes": ["【課堂延伸】Sign：簽名/標誌。"], "vocab_notes_en": ["Transcript: Written text.[cite: 5]"], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/Bus_Part_A2_Video.pdf", "link_text": "閱讀 BP 影音腳本 (Page 1)[cite: 5]"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "線上會議除錯 (Usherwood)", "category_en": "Video Conferencing Issues", "title": "視訊會議 6 大常見問題與排解", "title_en": "6 Common Issues with Video Conferencing", "key_takeaways": "【文章重點】掌握視訊會議音訊與連線故障排除[cite: 5]。", "key_takeaways_en": "Learn professional expressions for troubleshooting 6 common video glitches[cite: 5].", "main_content": "• 閱讀文章，學習解決會議技術問題[cite: 5]。", "vocab_notes": ["【課堂延伸】Static：雜音。", "【課堂延伸】Frozen：畫面卡住。", "【課堂延伸】Glitch：小故障。", "【課堂延伸】Grainy：畫質模糊。", "【課堂延伸】You are on mute：你靜音了。", "【課堂延伸】Breaking up：聲音斷斷續續。", "【課堂延伸】On and off：斷斷續續。", "【課堂延伸】Get cut off：斷線。", "【課堂延伸】Echo / feedback：回音。"], "vocab_notes_en": ["Troubleshoot: Solving problems.[cite: 5]"], "link": "https://www.usherwood.com/blog/6-common-issues-with-video-conferencing-and-how-to-solve-them", "link_text": "閱讀 6 Common Issues 文章[cite: 5]"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "官方影音自習 (BP Video 4.4.1)", "category_en": "Official Video 4.4.1", "title": "線上會議問題特訓 (BP Video 4.4.1)", "title_en": "Problems Encountered in Online Meetings", "key_takeaways": "【聽力任務】觀察三段對話（Conversation 1, 2, 3）中的連線與會議問題[cite: 6]。", "key_takeaways_en": "Identify problems in online meetings[cite: 6].", "main_content": "• 聽取對話中遭遇的技術困難[cite: 6]。", "vocab_notes": ["【課堂延伸】Pound key：井字鍵 (#)。", "【課堂延伸】Recap：總結。"], "vocab_notes_en": ["Identify problems in video calls.[cite: 6]"], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/Bus_Part_A2_U4L4_4.4.1.mp4", "link_text": "觀看 BP Video 4.4.1[cite: 5]"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "實境短片 (Tripp & Tyler)", "category_en": "Real Life Conference Calls", "title": "A Conference Call in Real Life", "title_en": "A Conference Call in Real Life", "key_takeaways": "【影音學習】幽默呈現真實視訊會議狀況[cite: 5]。", "key_takeaways_en": "Comedic depiction of conference calls[cite: 5].", "main_content": "• 學習會議中的尷尬狀況用語[cite: 5]。", "vocab_notes": ["【課堂延伸】Troll：網路酸民/搗亂者。"], "vocab_notes_en": ["Troll: Someone who leaves intentionally annoying messages.[cite: 5]"], "link": "https://www.youtube.com/watch?v=DYu_bGbZiiQ", "link_text": "觀看 Tripp & Tyler 影片 (Audio Call)[cite: 5]"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "進階實境短片 (Tripp & Tyler)", "category_en": "Video Conference Call in Real Life", "title": "A Video Conference Call in Real Life", "title_en": "A Video Conference Call in Real Life", "key_takeaways": "【影音學習】加入視訊畫面後的尷尬會議實況[cite: 5]。", "key_takeaways_en": "Comedic depiction of video conference calls[cite: 5].", "main_content": "• 學習視訊畫面分享的常用語[cite: 5]。", "vocab_notes": ["【課堂延伸】Crepe, creep：可麗餅，怪胎 (易混淆字)。"], "vocab_notes_en": ["Video conferencing terminology.[cite: 5]"], "link": "https://www.youtube.com/watch?v=JMOOG7rWTPq", "link_text": "觀看 Tripp & Tyler 影片 (Video Call)[cite: 5]"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "商業自習 (CNBC)", "category_en": "CNBC Self-Study", "title": "商業思維：Costco 汽油", "title_en": "Why Costco Gas is So Cheap", "key_takeaways": "【商業學習】了解好市多為什麼汽油便宜[cite: 5]。", "key_takeaways_en": "Self-study business analysis on Costco gas pricing[cite: 5].", "main_content": "• 學習商業定價策略[cite: 5]。", "vocab_notes": ["【課堂延伸】Barista：咖啡師。"], "vocab_notes_en": ["Profit margin analysis.[cite: 5]"], "link": "https://www.youtube.com/watch?v=vvBYMNXgfVo", "link_text": "觀看 CNBC 影片[cite: 5]"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "心理學自習 (BBC Global)", "category_en": "BBC Self-Study", "title": "心理學：哼唱好處", "title_en": "The Psychological Benefits of Humming", "key_takeaways": "【心理學學習】了解哼唱如何幫助身體放鬆[cite: 5]。", "key_takeaways_en": "BBC psychological benefits of humming[cite: 5].", "main_content": "• 學習身心健康相關單字[cite: 5]。", "vocab_notes": ["【課堂延伸】Blended family：繼親家庭。", "【課堂延伸】LGBTQ：多元性別族群。", "【課堂延伸】Bridesmaid：伴娘。", "【課堂延伸】Wig：假髮。"], "vocab_notes_en": ["Psychological well-being.[cite: 5]"], "link": "https://www.youtube.com/watch?v=LCW5Ftg0_uI", "link_text": "觀看 BBC Global 影片[cite: 5]"}];
+        const rawDatabase = [{"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "社交問候 (Greetings)", "category_en": "Greetings & Small Talk", "title": "初次見面與熟人寒暄 (Greetings & Responses)", "title_en": "Greetings & Daily Catch-ups", "key_takeaways": "【多益高頻句型與職場延伸】\n1. 詢問近況的道地句型：How is it going? / How are things with you?\n2. 萬用中性回答公式：Same old, same old. / Pretty much the same. / Can not complain.\n3. 職場接人文化差異：美式常用 pick up someone，而英式英語則常使用 collect someone 來表示接送某人。\n4. 接待禮儀：正式會議開場引導外賓入座時，請使用 Please be seated。", "key_takeaways_en": "Master natural casual updates, British vs American terms for picking someone up, and formal business greetings.", "main_content": "A: Hi, my name is John. Please be seated. And you are?\nB: I am Ryan. I am a new recruit from the IT department.\nA: How is it going with your new project?\nB: Pretty good. Can not complain.\nA: I have got to go now to collect our client from the station. See ya!\nB: Sure! Catch up with you later!", "vocab_notes": ["Collect someone [kəˈlɛkt] (v. phr.) [英式高頻用法]：接送某人、接某人（英式常用，等同於美式的 pick up someone）。\n  例句：I need to *collect* my manager from Kaohsiung High Speed Rail Station at 3 PM.", "Pick up someone (v. phr.) [美式常用]：接送某人（美式最常見說法）。\n  例句：Can you *pick up* the client from the airport tomorrow morning?", "Recruit [rɪˈkrut] (n./v.) [職場高頻]：新進員工；招募。\n  例句：Anna is our latest *recruit* in the research and development department.", "Please be seated (句型) [正式商務禮儀]：請入座、請坐下。\n  例句：Ladies and gentlemen, the keynote presentation is starting, *please be seated*.", "Catch up with someone (片語) [商務社交高頻]：與某人敘舊、聊聊近況。\n  例句：It was wonderful to *catch up with you* after the regional conference.", "Pickup line [ˈpɪkˌʌp laɪn] (n.) [文化補充]：搭訕開場白。\n  例句：Using an awkward *pickup line* at a professional networking mixer is inappropriate."], "vocab_notes_en": ["Collect someone: British English equivalent of American English pick up someone.\n  Example: I will *collect* our guest from the terminal.", "Recruit: A newly hired employee.\n  Example: We welcomed three new *recruits* to our engineering team."], "practice_quiz": [{"question": "【填空題】英式英語中要表達「去車站接客戶」，可以填入哪個動詞？\nI need to _________ our client from the train station.", "answer": "✔ 填空解答：collect\n👉 整句回答：I need to collect our client from the train station.\n💡 解析：在英式英語中，collect 常用於接送人或提取行李物品；美式英語則偏好使用 pick up。"}], "instant_guide": {"core_concepts": ["1. 熟人寒暄避免死板回答 I am fine。", "2. 英美用法區分：collect someone (英) vs. pick up someone (美)。", "3. 正式接待外賓時的禮貌用語：Please be seated。"], "misconceptions": ["誤解 1：以為 collect 只能用來收集郵票或數據，其實英式英語常用於接送人。", "誤解 2：以為每次道別都只能說 Goodbye，口語中 Catch up with you later 更顯親切。"], "exam_questions": ["Q1: 請說明英式英語 collect someone 與美式英語 pick up someone 在使用上的語意等價性。", "Q2: 請寫出兩種信件開頭的專業商務問候語。"]}, "socratic_quiz": [{"level": "商務社交策略 (Level 1)", "prompt": "當外國客戶問你 How is work going? 時，回答 Same old, same old 與 Can not complain 在語感上有何不同？", "feedback": "Same old 表示工作如常、平穩無重大波折；Can not complain 則帶有積極正向、事情進行順利且沒有值得挑剔之處的語感。"}], "confusion_fixer": {"analogy": "【生活類比】：問候就像拋接球，回覆 I am fine 像是把球接住後直接放地上，而回答 Can not complain, how about you? 則是把球順暢地拋回對方場地。", "real_example": "走廊偶遇：Hey Ryan, how are things? ➔ Can not complain, just wrapping up the weekly safety audit.", "common_mistake": "錯誤：How do you do? 用於熟人寒暄（這只用於非常正式的初次見面握手場合）。"}, "gap_finder": ["⚠️ 潛在缺口 1：與英系外商客戶溝通時，常忽略 collect 表示接人的實務用法。", "⚠️ 潛在缺口 2：缺少在道別時主動給予對方祝願的習慣。"], "link": "https://www.linkedin.com/pulse/18-ways-say-hello-english-thomas-spengler/", "link_text": "18 Ways to Say Hello in English"}, {"week": "week1", "class_date": "2026/08/12", "type": "sentence", "category": "道別用語 (Goodbyes)", "category_en": "Goodbyes & Core Grammar", "title": "道別與核心文法規則 (Ways to Say Goodbye & Grammar)", "title_en": "Ways to Say Goodbye & Grammar Rule", "key_takeaways": "【多益高頻句型與文法規則】\n1. 職場非正式道別：I have got to get going / Take it easy / Have a good one / See ya.\n2. 正式商務道別：It was a pleasure to see you / I look forward to our next meeting.\n3. 多益必考文法 Pro Tip：Look forward to + V-ing（to 是介系詞，後面必須接動名詞 V-ing 或名詞，絕不可接原形動詞！）。", "key_takeaways_en": "Master informal vs formal goodbyes and the core grammar rule: Look forward to MUST be followed by V-ing or a noun.", "main_content": "A: I have got to get going now! I look forward to our next meeting.\nB: Take it easy! Have a good one!\nA: It was a pleasure to see you.\nB: I look forward to seeing you soon in Kaohsiung.", "vocab_notes": ["Look forward to + V-ing [lʊk ˈfɔrwərd tu] (phr.) [多益核心文法]：期待相會。\n  例句：I *look forward to collaborating* with your process safety team on the upcoming plant audit.", "Take it easy (idiom) [口語常用]：保重、放輕鬆（非正式道別語）。\n  例句：*Take it easy* this weekend, you have been working exceptionally hard.", "Exit vs. Exist [易混淆字辨析]：\n  - Exit [ˈɛɡzɪt] (n./v.)：出口；離開。\n  - Exist [ɪɡˈzɪst] (v.)：存在、生存。\n  例句：Please proceed to the emergency *exit* if safety alarms sound.", "See ya (phr.)：再見（口語中 See you 的縮讀）。\n  例句：I must catch my train now, *see ya* tomorrow!"], "vocab_notes_en": ["Look forward to + V-ing: Formal business phrase anticipating a future event.\n  Example: We *look forward to meeting* with your executive board.", "Exit vs Exist: Exit means a way out; exist means to have actual being."], "practice_quiz": [{"question": "【文法填空題】請填入 see 的正確動詞形式：\nI look forward to _________ you at the conference next month.", "answer": "✔ 填空解答：seeing (V-ing)\n👉 整句回答：I look forward to seeing you at the conference next month.\n💡 解析：Look forward to 中的 to 是介系詞，後方必須搭配動名詞 V-ing 或名詞！"}], "instant_guide": {"core_concepts": ["1. Look forward to 後接動名詞 V-ing 的介系詞本質。", "2. 初次見面（meeting you）與再次見面（seeing you）的道別動詞區分。"], "misconceptions": ["誤解 1：看到 to 就直覺接原形動詞 ➔ 錯誤：I look forward to see you。"], "exam_questions": ["Q1: 請挑出錯誤並改正：We look forward to discuss the project with your team."]}, "socratic_quiz": [{"level": "文法陷阱題 (Level 1)", "prompt": "為什麼 I am looking forward to see you 在正式商業書信中會被判定為嚴重文法錯誤？", "feedback": "因為此處的 to 不是不定詞符號，而是表示方向與對象的介系詞，介系詞後方必須接動名詞 (V-ing) 或名詞。"}], "confusion_fixer": {"analogy": "【生活類比】：to 就像特定規格的插座，不定詞插座只插原形動詞，而介系詞插座（如 look forward to）只接受名詞或動名詞。", "real_example": "信件結尾：I look forward to cooperating with your technical division.", "common_mistake": "錯誤：I look forward to receive your quotation."}, "gap_finder": ["⚠️ 潛在缺口：在書信中混淆初次見面結尾（Nice meeting you）與熟人再次見面結尾（Nice seeing you）。"], "link": "https://www.berlitz.com/blog/goodbye-english", "link_text": "81 Ways to Say Goodbye in English"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "影音自習 (BP 5.4.1)", "category_en": "Video Self-Study", "title": "商務社交情境：巴黎會面 (Business Partner A2 5.4.1)", "title_en": "Business Socializing in Paris (BP A2 5.4.1)", "key_takeaways": "【詳細劇情摘要與學習重點】\n1. 劇情核心：Julia 抵達巴黎參加商務研討會，與合作夥伴 Maria 和 Max 會面，討論抵達交通方式與飯店舒適度。\n2. 詢問抵達交通句型：When did you arrive? / I flew in yesterday afternoon.\n3. 觀察非語言肢體語言 (Micro-expression)：Roll one's eyes（無奈翻白眼）、Make a face（撇嘴做鬼臉）、Wink（眨眼暗示）。", "key_takeaways_en": "Summary: Julia arrives in Paris for a conference. Observe travel inquiries, hotel evaluations, and facial micro-expressions.", "main_content": "A: When did you arrive in Paris?\nB: I flew here yesterday afternoon. Traffic from the airport was heavy.\nA: Where are you staying? Do you like the hotel?\nB: At the Mason Park Hotel. The room is small, but comfortable, and it is a 5-minute walk to the venue.\nA: Do you have plans for dinner tonight? Would you like to come?\nB: Count me in! Why not?", "vocab_notes": ["Venue [ˈvɛnju] (n.) [多益高頻]：會場、舉辦地點。\n  例句：It is a 5-minute walk from our hotel to the exhibition *venue*.", "Fly in / Fly here (v. phr.)：搭機抵達（商務出差高頻片語）。\n  例句：Our technical consultants *flew in* from Singapore this morning to join the conference.", "Micro-expression [ˈmaɪkroʊ ɪkˈsprɛʃən] (n.) [職場觀察]：微表情、細微臉部反應。\n  例句：During the contract negotiation, his *micro-expression* revealed hesitation.", "His facial expression otherwise (句型) [職場延伸]：他的臉部表情透露了相反的意思（口是心非）。\n  例句：He said the project schedule was fine, but *his facial expression said otherwise*.", "Count me in (片語) [口語極高頻]：算我一份、我也要參加。\n  例句：Are you joining the dinner with the European delegation? — Yes, *count me in*!"], "vocab_notes_en": ["Venue: The designated conference center or exhibition hall.", "Micro-expression: A brief, involuntary facial expression showing true emotion."], "next_week_tasks": ["💡 課堂任務預告：準備好 30 秒抵達交通與飯店評價對話，並練習使用臉部表情表達真實情緒。"], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/Bus_Part_A2_U5L4_5.4.1.mp4", "link_text": "觀看 Business Partner 5.4.1 影片 (MP4)"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "官方腳本閱讀 (BP Script)", "category_en": "Video Script Reading", "title": "Business Partner A2 影音逐字稿對照 (Page 3)", "title_en": "Video Script for Business Partner A2", "key_takeaways": "【官方指定文件研讀】\n請參閱 Business Partner A2 影音腳本 PDF 第 3 頁（Video 5.4.1 完整對白文字稿），對照聽力逐字稿加強記憶，標記出生難字彙與連音技巧。", "key_takeaways_en": "Read the official dialogue script on page 3 of the PDF to reinforce listening comprehension.", "main_content": "• 閱讀重點指引:\n請開啟下方 PDF 講義第 3 頁，比對 Julia、Maria 與 Max 在飯店大廳會面時的真實語速、發音弱化與商務社交措辭。", "vocab_notes": ["Transcript [ˈtrænsˌkrɪpt] (n.) [商務必備]：逐字稿、成績單、會議文字記錄。\n  例句：Please read through the video *transcript* to master natural liaison and reduction in speech.", "Dialogue [ˈdaɪəˌlɔɡ] (n.)：對話、交談。\n  例句：The *dialogue* illustrates typical small talk at an international trade exhibition."], "vocab_notes_en": ["Transcript: A written, printed, or typed copy of spoken words.", "Dialogue: A conversation between two or more people in a professional context."], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/Bus_Part_A2_Video.pdf", "link_text": "閱讀 Business Partner A2 影音腳本 PDF (請翻至第 3 頁)"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "聽力與發音特訓 (BP WB 5.5)", "category_en": "Audio Self-Study", "title": "展會心得聽力特訓與標點發音 (BP Workbook 5.5)", "title_en": "Trade Fair Impressions & Punctuation Practice", "key_takeaways": "【聽力檢測與標點符號發音】\n1. 聽力辨識時間差：Did Amy and Marta arrive on the same day? If not, when did they arrive separately?\n2. 展會觀點：What did Amy think of the conference center? What did Victor think about recycling?\n3. 標點符號的英文唸法：Dash (破折號 —)、Hyphen (連字號 -)、Underscore (底線 _)。", "key_takeaways_en": "Summary: Listen to trade fair impressions and master punctuation pronunciations like hyphen, dash, and underscore.", "main_content": "A: What did Amy think about the conference center?\nB: She liked the recycling presentation. It is very accessible.\nA: I need to send her the compliance report. What is her email address?\nB: It is amy hyphen smith underscore ehs at company dot com.", "vocab_notes": ["Hyphen [ˈhaɪfən] (n.) [多益高頻]：連字號（-，用於連接複合字，如 5-minute walk）。\n  例句：A *hyphen* is used in compound adjectives such as user-friendly.", "Dash [dæʃ] (n.)：破折號（—，用於語意停頓或補充說明）。\n  例句：You can use an em *dash* to separate distinct thoughts in business reports.", "Underscore [ˌʌndɚˈskɔr] (n./v.)：底線（_）；強調。\n  例句：There is an *underscore* between my name and department in my system account.", "Underline emphasize (v. phr.)：畫底線強調。\n  例句：We must *underline and emphasize* process safety compliance during turnaround maintenance."], "vocab_notes_en": ["Hyphen: Punctuation mark (-) used to join words together.", "Underscore: Line character (_) widely used in email addresses and programming."], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/BP_A2_WB_5_05.mp3", "link_text": "聆聽 Business Partner Workbook 5.5 音檔 (MP3)"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "BBC 職場入門 (BBC Intro)", "category_en": "BBC Introduction", "title": "職場求職與辦公室生存 (BBC English at Work Intro)", "title_en": "BBC English at Work: An Introduction", "key_takeaways": "【職場高頻單字與面試技巧】\n1. 公司背景：Tip Top Trading 是一家塑膠水果製造商 (Plastic fruit industry / sector)。\n2. 辦公室禁忌：嚴禁在走廊或茶水間刻意偷聽他人對話 (Eavesdrop vs. Overhear)。\n3. 面試金句：This job is an ideal match for my skills and experience.", "key_takeaways_en": "Summary: Anna interviews at Tip Top Trading. Master interview pitch phrases and office vocabulary.", "main_content": "A: Can you tell me about yourself?\nB: This job is an ideal match for my skills and experience. I get on with people easily.\nA: What does your company manufacture?\nB: We operate in the plastic fruit sector. Our company is prestigious and famous.\nA: I accidentally overheard managers discussing staffing.\nB: Remember, it is inappropriate to eavesdrop on confidential executive discussions.", "vocab_notes": ["Eavesdrop [ˈivzˌdrɑp] (v.) [職場高頻]：偷聽、竊聽（有意識地故意去聽）。\n  例句：It is unethical to *eavesdrop* on private management discussions.", "Overhear [ˌoʊvɚˈhɪr] (v.) [多益常考]：無意間聽到（無心聽見）。\n  例句：I accidentally *overheard* that the plant audit was scheduled for next Friday.", "Sector / Industry [ˈsɛktɚ] (n.) [多益核心]：產業、部門。\n  例句：LCY operates in the advanced specialty chemical *sector*.", "Prestigious [prɛˈstɪdʒəs] (adj.) [進階單字]：有聲望的、聲譽卓著的。\n  例句：AIChE is one of the most *prestigious* chemical engineering conferences in the world."], "vocab_notes_en": ["Eavesdrop: Intentionally listen secretly to a private conversation.", "Overhear: Hear someone without meaning to or without their knowledge."], "link": "https://www.bbc.co.uk/learningenglish/english/features/english-at-work/english-at-work-intro", "link_text": "觀看 BBC English at Work: Intro"}, {"week": "week1", "class_date": "2026/08/12", "type": "media", "category": "口語特訓 (Papa Teach Me)", "category_en": "YouTube Self-Study", "title": "告別生硬問候 (Stop Saying I am fine - Papa Teach Me)", "title_en": "Alternatives to 'How are you?", "key_takeaways": "【自學影音任務重點】\n1. 學習超過 15 種回答 How are you 的在地自然替代說法（如 Couldn't be better, Can't complain, Same old）。\n2. 掌握當對方看起來氣色不佳或沮喪時的 5 種關心問句（如 You look a bit under the weather）。", "key_takeaways_en": "Learn 15+ authentic alternatives to 'I am fine' and 5 empathetic phrases when someone appears unwell.", "main_content": "A: How are you doing today?\nB: Never better! Couldn't be better!\nA: Are you feeling alright? You look a bit under the weather.\nB: I am feeling a bit exhausted due to the audit, but hanging in there.", "vocab_notes": ["Under the weather [ˈʌndɚ ðə ˈwɛðɚ] (idiom) [日常高頻]：身體微恙、身體不舒服。\n  例句：Our senior engineer is *under the weather* and taking sick leave today.", "Never better (idiom)：好得不能再好了、狀態處於巔峰。\n  例句：How do you feel after the vacation? — *Never better*!", "Composite [kəmˈpɑzɪt] (adj./n.)：複合的、合成物。\n  例句：We use advanced *composite* materials in our pipe coatings."], "vocab_notes_en": ["Under the weather: Slightly unwell or in low spirits.", "Never better: In the best possible health or condition."], "link": "https://www.youtube.com/watch?v=f259lQdMo2s", "link_text": "觀看 Papa Teach Me 教學影片 (YouTube)"}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "差旅交通 (Accommodation)", "category_en": "Travel & Logistics", "title": "研討會住宿與地鐵動線 (AIChE Minneapolis)", "title_en": "AIChE Conference Transit & Hotel Proximity", "key_takeaways": "【多益高頻句型與差旅延伸】\n1. 飯店評估指標：Price (單晚房價), Location (地理位置), Distance to the venue (離會場距離)。\n2. 描述步行與地鐵直達：\n   - The hotel is within walking distance. (It is a 5-minute walk.)\n   - From the hotel, I can take the subway directly without transferring.\n3. 明尼阿波利斯 Skyway 空中步道系統在防寒防雪上的實務通行優勢。", "key_takeaways_en": "Master hotel selection criteria, walkability phrases (within walking distance), and direct subway transit without transfers.", "main_content": "A: The hotel is near the subway station and within walking distance.\nB: From the hotel, can I take the subway directly to the conference venue?\nA: Yes, you can take the Blue Line directly. You do not need to transfer.\nB: That is very convenient. I have no idea about their room price.", "vocab_notes": ["Within walking distance (phr.) [多益核心]：步行可達的距離。\n  例句：Our conference hotel is located *within walking distance* of the convention center.", "Transfer [trænsˈfɚ] (v./n.)：轉乘、換車（搭乘大眾運輸）。\n  例句：Take the Blue Line directly; there is no need to *transfer* at all.", "Nearby [ˌnɪrˈbaɪ] (adv./adj.)：在附近、鄰近的。\n  例句：There are several convenience stores located *nearby*.", "Close to / Near (prep.)：接近、靠近。\n  例句：The Hyatt Regency is very *close to* the entrance of the Skyway."], "vocab_notes_en": ["Within walking distance: Easily accessible on foot.", "Transfer: Change from one transit vehicle or line to another."], "practice_quiz": [{"question": "【填空題】告訴外國客戶「飯店走路就能到會場」，請填入核心片語：\nThe hotel is _________ _________ distance to the venue.", "answer": "✔ 填空解答：within walking\n👉 整句回答：The hotel is within walking distance to the venue.\n💡 解析：within walking distance 是商務訂房與交通指南中最常用的片語。"}], "instant_guide": {"core_concepts": ["1. 住宿地點優勢描述（離地鐵近、步行可達）。", "2. 大眾運輸直達與免轉乘表達（take the train directly without transferring）。"], "misconceptions": ["誤解：將轉車說成 change train（商務正式用語優先使用 transfer）。"], "exam_questions": ["Q1: 請用一句話說明飯店離地鐵站非常近，步行只要 5 分鐘。"]}, "socratic_quiz": [{"level": "差旅規劃 (Level 1)", "prompt": "在預訂國際研討會飯店時，為什麼向主辦方確認 within walking distance 比離機場近更關鍵？", "feedback": "因為研討會每日行程緊湊且常有夜間社交（Happy Hour），步行可達能省下大量等計程車與轉車的時間成本。"}], "confusion_fixer": {"analogy": "【生活類比】：出差選飯店就像選高鐵站旁邊的停車場，within walking distance 永遠比便宜但要轉兩班公車更具時間效益！", "real_example": "We selected the Hyatt because it is *within walking distance* to the AIChE venue.", "common_mistake": "錯誤：The hotel is in walking distance.（介系詞必須搭配 within）。"}, "gap_finder": ["⚠️ 潛在缺口：口語常常忘記使用 directly (副詞) 來修飾搭乘交通工具。"], "link": "https://minneapolis-2021.s3.amazonaws.com/images/2024_SkywayMap_Digital.pdf?v=1726683206", "link_text": "Minneapolis Skyway & Hotel Map (PDF)"}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "在地推薦 (Recommendations)", "category_en": "Food & Places Recommendations", "title": "在地美食景點推薦與避開觀光陷阱", "title_en": "Recommending Food, Places & Avoiding Tourist Traps", "key_takeaways": "【多益高頻句型與在地推薦】\n1. 推薦句型：I recommend ___ because ___ / I think ___ is worth seeing / visiting / eating.\n2. 必訪與難忘體驗：It is my all-time favorite / It is a must-see / It is a once-in-a-lifetime experience!\n3. 觀光陷阱與敲竹槓辨析：Tourist trap (專坑遊客的店) vs. Tourist attraction (著名觀光景點)；Rip off (動詞) vs. Rip-off (名詞)。", "key_takeaways_en": "Learn to recommend local culture and cuisine, while warning visitors against tourist traps and overpriced rip-offs.", "main_content": "A: In Kaohsiung, what food do you recommend to enjoy our stay?\nB: I think Hakka dishes and mutton fried rice are worth eating! They are accessible and delicious cuisine.\nA: What about the night market?\nB: The night market is a famous tourist attraction, but beware of overpriced fruit stands. Paying NT$500 for cut guava is a complete rip-off and a tourist trap!", "vocab_notes": ["Tourist trap [ˈtʊrɪst træp] (n.) [生活高頻]：專坑遊客的店（相對詞：Tourist attraction 著名景點）。\n  例句：That seafood restaurant is a *tourist trap*; they rip off out-of-towners with inflated prices.", "Rip-off [ˈrɪp ˌɔf] (n.) [多益常考]：敲竹槓、極度不合理的收費。\n  例句：Charging NT$500 for a small bag of cut guava is a complete *rip-off*.", "Rip off (v. phr.)：敲某人竹槓、坑騙。\n  例句：The unscrupulous vendor *ripped off* the foreign visitors.", "Accessible [ækˈsɛsəbəl] (adj.) [多益核心]：容易到達的、易取得的。\n  例句：The local food court is easily *accessible* by light rail.", "Cuisine [kwɪˈzin] (n.)：精緻料理、菜餚。\n  例句：Taiwanese night market *cuisine* has achieved worldwide renown.", "Out-of-towner (n.)：外地人、外地遊客。\n  例句：The store offers reasonable prices to locals but overcharges *out-of-towners*.", "Bed and breakfast / B&B (n.)：民宿。\n  例句：We booked a cozy *B&B* near the pier instead of a large hotel.", "Food court (n.)：百貨美食街。\n  例句：Let us grab a quick lunch at the shopping center *food court*."], "vocab_notes_en": ["Tourist trap: An establishment that attracts and overcharges tourists.", "Rip-off: Something that costs far more than it is actually worth."], "practice_quiz": [{"question": "【填空題】指控某家餐廳專門敲觀光客竹槓、收取暴利：\nThat restaurant is a _________ _________; charging NT$500 for fruit is a total _________-_________.", "answer": "✔ 填空解答：tourist trap, rip-off\n👉 整句回答：That restaurant is a tourist trap; charging NT$500 for fruit is a total rip-off.\n💡 解析：tourist trap 指坑人場所；rip-off 指敲竹槓的交易本身。"}], "instant_guide": {"core_concepts": ["1. 在地美食文化推薦句型（worth + V-ing）。", "2. 辨析 tourist trap (坑人陷阱) 與 tourist attraction (觀光勝地)。"], "misconceptions": ["誤解：以為 worth 後面接原形動詞 ➔ 錯誤：It is worth to see（正確：It is worth seeing）。"]}}, {"week": "week2", "class_date": "2026/08/19", "type": "sentence", "category": "展會人脈 (Networking)", "category_en": "Networking Role-Play Full Script", "title": "展會破冰與部門職掌交流 (Networking Role-Play 投影片全劇本)", "title_en": "Networking Role-Play Full Script", "key_takeaways": "【課堂即興演練 6 階段黃金劇本】\n1. 自我介紹與部門 ➔ 2. 詢問對方部門 ➔ 3. 簡述己方職掌 ➔ 4. 帶出工作痛點 ➔ 5. 提供協助 ➔ 6. 交換名片約定後續聯絡。\n核心轉折金句：You just remind me that we may need your help in... / Here is my business card should you want to call.", "key_takeaways_en": "Master the 6-stage networking dialog to uncover pain points and transition smoothly into business cooperation.", "main_content": "A: Hello, I am Ryan. I work as a Senior Specialist in Process Safety.\nB: Hi, I am Alex. It is a pleasure to meet you.\nA: Can you tell me about your department?\nB: Sure! I work in Operations. We manage plant production lines.\nA: Can I briefly tell you about what our department does?\nB: Of course! I am all ears. Fire away!\nA: We conduct safety risk assessments and incident prevention audits.\nB: You just remind me that we may need your help in identifying vapor leakage risks.\nA: Yeah, I think we might be able to help you.\nB: That would be great! It is so nice of you to offer help.\nA: Here is my business card should you want to call.\nB: Absolutely. I will be in touch soon.", "vocab_notes": ["I am all ears [aɪm ɔl ɪrz] (idiom) [商務社交]：我洗耳恭聽、全神貫注。\n  例句：Tell me about your plant expansion plan; *I am all ears*.", "Fire away (idiom) [口語高頻]：請說吧、請開始提問吧。\n  例句：Do you have questions regarding the safety protocol? *Fire away*!", "You just remind me that... (phr.)：你正好提醒了我...（切入痛點的神級轉折句型）。\n  例句：*You just remind me that* our relief valves are overdue for inspection.", "Should you want to call (phr.) [高階倒裝句]：若您想致電的話（等同於 If you should want to call）。\n  例句：Here is my contact information *should you want to call* regarding consulting."], "vocab_notes_en": ["I am all ears: Listening eagerly and with full attention.", "Fire away: Go ahead and ask questions or speak."], "practice_quiz": [{"question": "【填空題】對方想向你簡報業務，你想熱情表示「請說吧！我洗耳恭聽」：\nOf course! I am all _________ ! / _________ away!", "answer": "✔ 填空解答：ears, Fire\n👉 整句回答：Of course! I am all ears! / Fire away!\n💡 解析：I am all ears 與 Fire away 都是商務社交場合中展現積極聆聽的道地用語。"}]}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "BBC 職場自習 (BBC Networking)", "category_en": "BBC Networking Self-Study", "title": "商務社交實戰：Tip Top Trading (BBC #48 Face-to-face)", "title_en": "Networking Face-to-Face (BBC #48)", "key_takeaways": "【詳細劇情與語言重點】\n1. 展會社交心態：在艱困經濟環境 (Tough economic climate) 下，必須積極拓展人脈 (Networking / schmoozing)。\n2. 行動口訣：Just be chatty and friendly / I will give it a shot / Let us get down to business.\n3. 辦公室暗流：管理階層面臨縮編壓力 (reduce team / be rid of staff)，Anna 必須證明自己的業務價值。", "key_takeaways_en": "Summary: Anna networks at an industry event under tough economic pressures, practicing friendly small talk and business pitches.", "main_content": "A: I heard you were in town! Let us do some networking and schmoozing with new clients.\nB: Smashing! I will give it a shot. Let us get down to business.\nA: It is a tough economic climate. By my calculations, you need to be rid of one member of staff.\nB: Crumbs! Bad news will not go down well with the team.", "vocab_notes": ["Schmooze [ʃmuz] (v.) [商務口語]：社交應酬、拉攏關係、建立人脈。\n  例句：Industry gala dinners are the perfect venue to *schmooze* with key accounts.", "Get down to business (idiom) [多益核心]：言歸正傳、開始談正事。\n  例句：Enough small talk about the weather, let us *get down to business*.", "Smashing / Amazing (adj.) [英式口語]：極好的、了不起的。\n  例句：The keynote speech on green hydrogen was absolutely *smashing*!", "Crumbs (interjection) [英式口語]：天哪、糟糕（委婉表達驚訝，等同於 Oh gosh）。\n  例句：*Crumbs*! The audit team arrived two hours ahead of schedule.", "Sort this out (phr.) [多益必考]：把事情解決、整頓好。\n  例句：We have an operational bottleneck in the terminal; let us *sort this out* today.", "Sore loser (n.)：輸不起的人。\n  例句：Do not be a *sore loser*; congratulate the rival firm on winning the bid.", "Be rid of (v. phr.)：擺脫、裁減（冗員）。\n  例句：Management decided to *be rid of* redundant administrative positions."], "vocab_notes_en": ["Schmooze: Talk casually and friendly in a social/business setting to gain advantage.", "Sort this out: Find a solution for an existing problem or conflict."], "link": "https://www.bbc.co.uk/learningenglish/english/features/english-at-work/48-language-for-networking", "link_text": "前往 BBC #48 課程網頁 (收聽音檔與劇本)"}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "科技與隱私自習 (Tech & Privacy)", "category_en": "Tech & Privacy Self-Study", "title": "Passkey 通行密鑰原理 (BBC News 02:35)", "title_en": "What is a Passkey? (BBC News 02:35)", "key_takeaways": "【影片詳細摘要與科技字彙】\nBBC News 探討 Passkey（通行密鑰）技術如何透過生物辨識（Biometrics: Touch ID / Face ID）與非對稱加密（Encryption）取代傳統密碼，從根本上防禦釣魚攻擊與詐騙（Fraud）。", "key_takeaways_en": "Explore how cryptographic passkeys and on-device biometrics eliminate passwords and resist fraud.", "main_content": "A: Passkeys replace traditional passwords with fast biometric authentication.\nB: They rely on public-key encryption to identify users and prevent fraud.\nA: You do not need to remember complex character strings anymore.\nB: It represents an inevitable evolution toward passwordless online security.", "vocab_notes": ["Biometrics [ˌbaɪoʊˈmɛtrɪks] (n.) [科技資安]：生物辨識技術（指紋、人臉辨識）。\n  例句：Modern smartphones use *biometrics* to identify authorized users securely.", "Encryption [ɪnˈkrɪpʃən] (n.) [多益核心]：資料加密。\n  例句：End-to-end *encryption* ensures that client communications cannot be intercepted.", "Fraud [frɔd] (n.) [多益高頻]：詐欺、詐騙。\n  例句：Financial institutions adopt biometric verification to combat account *fraud*.", "Inevitably [ɪnˈɛvətəbli] (adv.)：不可避免地、必然地。\n  例句：Legacy password systems will *inevitably* be replaced by cryptographic credentials."], "vocab_notes_en": ["Biometrics: Measurements and calculations related to human physical characteristics.", "Encryption: The process of converting information into secret code."], "link": "https://www.youtube.com/watch?v=lf5L_1oqHDs", "link_text": "開啟 BBC Passkey 影片 (02:35)"}, {"week": "week2", "class_date": "2026/08/19", "type": "media", "category": "CNN 科技隱私 (CNN Shorts)", "category_en": "CNN Smart Glasses Privacy", "title": "智慧眼鏡防偷拍奇招 (CNN Shorts 02:15)", "title_en": "If You Think You are Being Filmed by Smart Glasses, Try This", "key_takeaways": "【短片情境與法律字彙】\nCNN 探討 Meta 等智慧眼鏡引發的未經授權錄影隱憂（Harass / lack of consent），以及透過播放受版權保護的知名音樂觸發演算法判定侵權（Copyright infringement）而自動下架影片的反制策略。", "key_takeaways_en": "Learn practical and legal vocabulary around smart glasses surveillance, consent, and copyright infringement.", "main_content": "A: What should you do if someone uses smart glasses to harass or film you without consent?\nB: Play a Disney song on your phone! The copyright infringement algorithm will block the video from being uploaded.", "vocab_notes": ["Harass [həˈræs] (v.) [商務法律]：騷擾、侵擾。\n  例句：Recording coworkers without their knowledge in private areas can be legally deemed to *harass* them.", "Consent [kənˈsɛnt] (n./v.) [多益高頻]：同意、許可。\n  例句：You must obtain informed *consent* before filming individuals on industrial premises.", "Copyright infringement (n. phr.) [商務法律]：侵犯著作權、版權侵犯。\n  例句：Playing licensed commercial music in the background triggers auto-detection for *copyright infringement*."], "vocab_notes_en": ["Consent: Permission for something to happen or agreement to do something.", "Copyright infringement: The use of works protected by copyright without permission."], "link": "https://youtube.com/shorts/H7qyXwntx08?si=zc6OtSPaJOuWMik9", "link_text": "觀看 CNN Smart Glasses 短片 (02:15)"}, {"week": "week3", "class_date": "2026/09/02", "type": "sentence", "category": "工作日常 (Work Routine)", "category_en": "Work Routine & Duties", "title": "日常工作職責與跨部門協調 (What Do You Do? - BP Unit 1)", "title_en": "Work Routine, Duties & Departmental Alignment", "key_takeaways": "【多益高頻句型與職場延伸】\n1. 描述工作職責：I am responsible for a team of 5 people / I am in charge of plant safety.\n2. 跨部門協調與專案追蹤：Resolve inter-departmental conflicts (解決跨部門衝突) / Track project milestones (追蹤專案里程碑)。\n3. 通勤與工作型態：WFH (Work From Home 遠距居家辦公) / Cycle to and from work (騎自行車上下班)。\n4. 頻率與時間副詞辨析：Sometimes (有時，頻率) vs. Sometime (某個時候，時間點) vs. Some time (一段時間)。", "key_takeaways_en": "Describe duties, resolve inter-departmental conflicts, track milestones, and distinguish between sometime, sometimes, and some time.", "main_content": "A: What do you do for a living?\nB: I serve as Chief Executive Officer. I am responsible for resolving inter-departmental conflicts and tracking project milestones.\nA: How often do you commute or WFH?\nB: I sometimes cycle to and from the plant, but I usually WFH on Fridays to collect operational data and do the math for our budget.", "vocab_notes": ["Resolve inter-departmental conflicts (phr.) [高階管理]：解決跨部門衝突。\n  例句：A principal engineer must skillfully *resolve inter-departmental conflicts* between safety and production.", "Track milestone [træk ˈmaɪlˌstoʊn] (v. phr.) [專案管理]：追蹤重要里程碑。\n  例句：We use dashboards to *track milestones* across all maintenance stages.", "Do the math (idiom) [商務口語]：計算一下、仔細算算看。\n  例句：Look at the energy savings from the new vapor recovery unit; just *do the math*.", "WFH (abbreviation)：在家辦公（Work From Home 之縮寫）。\n  例句：Our sustainability division adopts a flexible policy allowing employees to *WFH* two days a week.", "Sometime vs. Sometimes vs. Some time [易混淆字辨析]：\n  - Sometime (adv.)：日後某個時間點（例：Let us meet *sometime* next month）。\n  - Sometimes (adv.)：有時候（頻率副詞，例：I *sometimes* cycle to work）。\n  - Some time (n. phr.)：相當一段時間（例：This root cause analysis will take *some time*）。", "Cycle to and from (v. phr.)：騎車來回通勤。\n  例句：He prefers to *cycle to and from* the technology park to stay active."], "vocab_notes_en": ["Resolve conflicts: Settle disputes between organizational groups amicably.", "Track milestone: Monitor key project deliverables against schedule."], "practice_quiz": [{"question": "【填空題】我想表達「這項深入稽核需要花費一段時間才能完成」：\nThis environmental audit will take _________ _________ to complete.", "answer": "✔ 填空解答：some time\n👉 整句回答：This environmental audit will take some time to complete.\n💡 解析：分開的 some time 表示一段充裕的時間；合在一起的 sometime 代表未來或過去的某個不確定時間點。"}]}, {"week": "week3", "class_date": "2026/09/02", "type": "sentence", "category": "會議議程 (Meeting Agendas)", "category_en": "Virtual & Face-to-Face Meeting Dynamics", "title": "會議型態比較與議程掌握 (Online Meetings & Hidden Agendas)", "title_en": "Meeting Types Comparison & Agenda Control", "key_takeaways": "【多益高頻句型與會議深度分析】\n1. 會議型態優缺點比較：Online meeting vs. Face-to-face meeting 的 Pros (優點) and Cons (缺點)。\n2. 專注力管理：容易分心 (Get distracted easily) vs. 容易集中精神 (Concentrated easily)。\n3. 會議議程名詞：Brief (專案簡報摘要), Hidden agenda (不可告人的隱藏意圖), Push one's agenda (強行推動個人議程), Sign on the dotted line (正式在虛線上簽字履約)。", "key_takeaways_en": "Compare pros and cons of online versus in-person meetings, manage distractions, and understand hidden agendas.", "main_content": "A: What are the pros and cons of an online meeting?\nB: In virtual sessions, participants get distracted easily. In-person meetings consume more travel time, but people are concentrated easily.\nA: Does the vendor agree with our safety brief?\nB: Yes, but watch out for any hidden agenda. Make sure their authorized representative signs on the dotted line before work commences.", "vocab_notes": ["Pros and cons [proʊz ænd kɑnz] (n. phr.) [多益必備]：優缺點、利弊得失。\n  例句：We must carefully weigh the *pros and cons* before selecting a DCS vendor.", "Hidden agenda [ˈhɪdən əˈdʒɛndə] (n.) [商務高階]：隱藏的意圖、不可告人的動機。\n  例句：The contractor has a *hidden agenda* to request budget variations later in the project.", "Sign on the dotted line (idiom) [商務簽約]：在合約虛線上簽名（正式拍板定案）。\n  例句：Once the legal team approves the clauses, we will *sign on the dotted line*.", "Get distracted easily (phr.)：容易分心（注意 distracted 的正確拼寫）。\n  例句：Multitasking during webinars causes engineers to *get distracted easily*.", "Time consumption (n.)：時間消耗、耗費時間。\n  例句：Long domestic flights contribute significantly to overall *time consumption* during site audits."], "vocab_notes_en": ["Pros and cons: The arguments for and against something.", "Hidden agenda: A secret or undisclosed objective behind formal discussions."], "practice_quiz": [{"question": "【填空題】我們要仔細評估線上開會的「優點與缺點」：\nWe need to analyze the _________ and _________ of virtual collaboration.", "answer": "✔ 填空解答：pros, cons\n👉 整句回答：We need to analyze the pros and cons of virtual collaboration."}]}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "官方影音自習 1 (BP Video 1.1.1)", "category_en": "Official Video 1.1.1", "title": "工作職責與出差頻率 (Business Partner A2 1.1.1)", "title_en": "Business Partner A2 Video 1.1.1", "key_takeaways": "【官方指定影音學習任務】\n1. 影片任務：觀看 Video 1.1.1，比較 Liz、Ellen 與 Muj 的上下班時間 (Starts work at 7:30 / Finishes work at 5:30) 與國際出差頻率。\n2. 掌握工作動詞搭配：Process orders (處理訂單), Take notes (做筆記), Conduct data analysis (進行數據分析)。", "key_takeaways_en": "Summary: Watch Video 1.1.1 and analyze how different professionals describe work hours, orders, and travel frequency.", "main_content": "A: Who starts work at 7:30 in Video 1.1.1?\nB: Liz does. She works with the sales team and often processes orders.\nA: Who travels to other countries for work and finishes at 5:30?\nB: Muj does. He also analyzes data and prepares executive presentations.", "vocab_notes": ["Process orders [ˈprɑsɛs ˈɔrdɚz] (v. phr.) [多益核心]：處理客戶訂單。\n  例句：Our logistics team *processes orders* rapidly to ensure zero delivery delay.", "Take notes (v. phr.)：做會議筆記、記錄重點。\n  例句：During the process hazard analysis, a designated junior engineer *takes notes*.", "Analysis vs. Analyses [字形發音辨析]：\n  - Analysis [əˈnæləsɪs] (單數名詞)。\n  - Analyses [əˈnæləsiz] (複數名詞)。\n  例句：Our risk *analyses* revealed multiple points of mechanical failure."], "vocab_notes_en": ["Process orders: Manage and execute purchase requests methodically.", "Analyses: Plural form of analysis, pronounced with an 'eez' ending."], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/Bus_Part_A2_U1L1_1.1.1.mp4", "link_text": "觀看 Business Partner Video 1.1.1 影片 (MP4)"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "官方腳本研讀 (BP Script 1.1.1)", "category_en": "Official Video Script Reading", "title": "Business Partner A2 影音腳本對照 (Page 1)", "title_en": "Video Script for Business Partner A2 (Page 1)", "key_takeaways": "【官方文件閱讀任務】\n請參閱 Business Partner A2 影音腳本 PDF 第 1 頁（Video 1.1.1 What Do You Do? 完整對白文字檔），對照聽力逐字稿加強記憶，留意日常時間與動詞形態變化。", "key_takeaways_en": "Study the official dialogue transcript on page 1 of the PDF to reinforce accurate grammar and pronunciation.", "main_content": "• 閱讀重點指引:\n請開啟下方 PDF 文件第 1 頁，仔細閱讀 Video 1.1.1 三位發言者的完整職責敘述，掌握動詞第三人稱單數加 s/es 的規則變化。", "vocab_notes": ["Sign [saɪn] (v./n.)：簽署；標誌。\n  例句：Please *sign* the safety entry permit before entering the processing unit.", "Briefing [ˈbrifɪŋ] (n.)：簡報會議、任務說明。\n  例句：We attend a morning safety *briefing* every day at 8 AM."], "vocab_notes_en": ["Sign: Write one's signature on an administrative document.", "Briefing: A meeting for imparting specific information or instructions."], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/Bus_Part_A2_Video.pdf", "link_text": "閱讀 Business Partner A2 影音腳本 PDF (請見第 1 頁)"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "線上會議除錯 (Usherwood)", "category_en": "Video Conferencing Issues", "title": "視訊會議 6 大常見問題排解指南 (Usherwood)", "title_en": "6 Common Issues with Video Conferencing and How to Solve Them", "key_takeaways": "【商務科技文章精讀】\n跨國視訊會議最常見的 6 大連線與影音障礙及專業英文排除術語：\n1. 聲音干擾：Static (靜電雜音), Echo / audio feedback (回音嘯叫), You are on mute (你被靜音了), Breaking up (聲音斷斷續續)。\n2. 畫面異常：Frozen screen (畫面凍結死當), Grainy video (畫質模糊粗糙), Glitch (小故障), On and off / get cut off (連線斷斷續續/徹底斷線)。", "key_takeaways_en": "Master IT and troubleshooting vocabulary for handling audio echo, static, frozen frames, and internet disconnects.", "main_content": "A: Alex, can you hear me? Your audio is breaking up and there is heavy static on the line.\nB: Sorry, my connection is unstable. Am I on mute?\nA: No, we can hear you now, but your camera feed is completely frozen and grainy. We got cut off earlier.\nB: Let me restart my router to troubleshoot the bandwidth issue.", "vocab_notes": ["Static [ˈstætɪk] (n.) [會議通訊]：雜音、靜電干擾聲。\n  例句：There is noticeable *static* on the conference phone; let us switch to Microsoft Teams.", "Breaking up (v. phr.) [通訊高頻]：聲音斷斷續續、訊號破碎。\n  例句：Sorry Ryan, you are *breaking up*. Could you repeat the last safety protocol number?", "Frozen [ˈfroʊzən] (adj.) [視訊必備]：畫面卡住、凍結死當。\n  例句：Your video feed is completely *frozen*; please disable your virtual background.", "Grainy [ˈɡreɪni] (adj.)：畫質粗糙、顆粒感重的。\n  例句：Due to low internet bandwidth, the video quality becomes noticeably *grainy*.", "Echo / Audio feedback (n.)：回音、音訊反饋嘯叫。\n  例句：I am hearing a loud *echo*; could all participants except the speaker please mute their microphones?", "Get cut off (v. phr.)：通話中斷、突然斷線。\n  例句：I apologize, our plant VPN disconnected and I *got cut off* from the global review call.", "On and off (adv. phr.)：斷斷續續地、時有時無地。\n  例句：The audio has been cutting *on and off* throughout the presentation."], "vocab_notes_en": ["Static: Crackling or hissing noise on a telephone line or virtual audio feed.", "Breaking up: When audio or voice communication becomes interrupted by poor connectivity."], "link": "https://www.usherwood.com/blog/6-common-issues-with-video-conferencing-and-how-to-solve-them", "link_text": "閱讀 Usherwood 視訊會議疑難排解文章"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "官方影音自習 2 (BP Video 4.4.1)", "category_en": "Official Video 4.4.1", "title": "視訊會議真實狀況聽力檢測 (Business Partner A2 4.4.1)", "title_en": "Problems Encountered in Online Meetings (BP A2 4.4.1)", "key_takeaways": "【官方影音任務：問題辨識】\n觀看 Video 4.4.1，識別三段不同遠端會議情境中的技術困難：\n- Conversation 1：音訊延遲與回音干擾？\n- Conversation 2：畫面分享權限未開或忘了取消靜音 (Forgot to unmute)？\n- Conversation 3：撥號輸入井字鍵 (Pound key #) 認證失敗？會議結束後的總結要點 (Recap)。", "key_takeaways_en": "Summary: Watch Video 4.4.1 to identify technical glitches in three distinct online meeting scenarios.", "main_content": "A: Welcome everyone. Please dial your participant code followed by the pound key.\nB: I think someone is on mute. Can you hear us?\nA: Yes, sorry! Let us do a quick recap of the three problems observed in Conversation 1, 2, and 3.", "vocab_notes": ["Pound key [paʊnd ki] (n.) [美式通訊]：井字鍵（#，美式稱 pound key，英式常稱 hash key）。\n  例句：Enter your conference meeting ID followed by the *pound key*.", "Recap [ˈrikæp] (n./v.) [多益核心]：重述要點、精要總結（Recapitulate 的縮寫）。\n  例句：Before concluding the alignment session, let us do a rapid *recap* of all agreed action items."], "vocab_notes_en": ["Pound key: The telephone symbol #, used for automated system navigation.", "Recap: A concise summary of what has been discussed or decided."], "link": "https://media.pearsoncmg.com/intl/elt/compose/Business_Partner_A2/Bus_Part_A2_U4L4_4.4.1.mp4", "link_text": "觀看 Business Partner Video 4.4.1 影片 (MP4)"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "實境喜劇 1 (Tripp & Tyler)", "category_en": "Conference Call in Real Life", "title": "電話會議實境爆笑諷刺劇 (A Conference Call in Real Life)", "title_en": "A Conference Call in Real Life (by Tripp & Tyler)", "key_takeaways": "【YouTube 實境文化學習】\n透過 Tripp & Tyler 破千萬觀看的經典搞笑諷刺短片，體會電話會議中令人抓狂的荒唐實況：\n1. 經典開場尷尬句：Who just joined? / Can you hear me now?\n2. 各種背景噪音與搗亂者 (Troll) 故意製造噪音、以及忘記解除靜音乾講三分鐘等文化反思。", "key_takeaways_en": "Experience the hilarious and absurd realities of corporate conference calls depicted in real-life settings.", "main_content": "• 短片經典爆笑對白片段:\n- 'Hi guys, sorry I am late, I had trouble with the access code.'\n- 'Who just joined?'\n- 'John, you are not muted, we can hear your dog barking!'\n- 'Stop trolling the conference call and get back to work!", "vocab_notes": ["Troll [troʊl] (n./v.) [網路職場文化]：惡作劇者、網路酸民、故意搗亂者；惡意挑釁。\n  例句：Ignore anonymous *trolls* who try to derail constructive project discussions.", "Absurdity [əbˈsɜrdəti] (n.)：荒謬、滑稽可笑。\n  例句：The comedy clip highlights the everyday *absurdity* of modern corporate teleconferences."], "vocab_notes_en": ["Troll: A person who intentionally disrupts online conversations with inflammatory remarks.", "Absurdity: The quality or state of being ridiculous or wildly unreasonable."], "link": "https://www.youtube.com/watch?v=DYu_bGbZiiQ", "link_text": "觀看 A Conference Call in Real Life (YouTube)"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "實境喜劇 2 (Tripp & Tyler)", "category_en": "Video Conference Call in Real Life", "title": "視訊會議實境爆笑短片 (A Video Conference Call in Real Life)", "title_en": "A Video Conference Call in Real Life (by Tripp & Tyler)", "key_takeaways": "【YouTube 實境文化學習】\n延續經典諷刺風格，本片刻畫升級為「視訊鏡頭 (Video call)」後的更多尷尬爆笑場景：\n1. 鏡頭角度怪異、穿睡褲開會、忘記開螢幕分享 (Share screen)。\n2. 聲音延遲造成的尷尬搶話，以及背景家人路過的幽默日常。", "key_takeaways_en": "Explore the visual awkwardness of modern video meetings, including camera glitches and screen-sharing blunders.", "main_content": "• 視訊短片核心爆笑問句:\n- 'Can everyone see my screen?'\n- 'No, you are sharing the wrong browser window!'\n- 'Why is your camera pointed at the ceiling?", "vocab_notes": ["Crepe vs. Creep [易混淆字辨析]：\n  - Crepe [krep] (n.)：法式薄餅、可麗餅。\n  - Creep [krip] (v./n.)：躡手躡腳爬行；怪胎、令人毛骨悚然的人。\n  例句：He tried to *creep* past the web camera during the live executive broadcast.", "Screen sharing (n.)：螢幕畫面共享。\n  例句：Please grant permission so the auditor can initiate *screen sharing*."], "vocab_notes_en": ["Creep: Move slowly and carefully in order to avoid being heard or noticed.", "Screen sharing: Transmitting the contents of one computer screen to another device."], "link": "https://www.youtube.com/watch?v=JMOOG7rWTPq", "link_text": "觀看 A Video Conference Call in Real Life (YouTube)"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "商業策略自學 (CNBC Make It)", "category_en": "Why Costco Gas is So Cheap", "title": "好市多汽油定價商業策略 (Why Costco Gas is So Cheap - CNBC 03:28)", "title_en": "Why Costco Gas is So Cheap (CNBC Make It)", "key_takeaways": "【CNBC 商業專題自學摘要】\n深入解析好市多 (Costco) 為什麼能長年維持低油價的商業策略：\n1. 帶路貨策略 (Loss leader)：以微薄利潤率 (Profit margin) 甚至虧損銷售汽油，藉此吸引大量會員開車進入倉儲賣場購物。\n2. 會員費護城河：利用高續約率的會員年費彌補油品毛利，帶動巨大的客流量 (Foot traffic) 與整體獲利。", "key_takeaways_en": "Learn corporate pricing strategies: Costco uses low-margin gas as a loss leader to drive retail foot traffic and membership renewals.", "main_content": "A: Why is Costco gas consistently cheaper than neighboring stations?\nB: Costco treats fuel as a loss leader. By accepting razor-thin profit margins on gas, they draw thousands of members into their warehouse to buy high-margin goods.", "vocab_notes": ["Profit margin [ˈprɑfɪt ˈmɑrdʒən] (n.) [多益核心商務]：利潤率、毛利率。\n  例句：Costco operates on lower *profit margins* than conventional supermarket chains.", "Foot traffic (n.) [零售商業]：客流量、到店顧客人潮。\n  例句：Offering cheap gasoline generates immense *foot traffic* for the main retail store.", "Barista [bəˈristə] (n.) [職場延伸單字]：咖啡師（在義式咖啡吧製作咖啡的專業人員）。\n  例句：The company cafeteria hired a professional *barista* to serve espresso to staff."], "vocab_notes_en": ["Profit margin: The amount by which revenue from sales exceeds costs in a business.", "Barista: A person whose job involves preparing and serving different types of coffee."], "next_week_tasks": ["💡 課後自學任務：請觀看影片後，用 1-3 句英文簡述 Costco 的定價策略，並列出學到的 2 個新商務單字。"], "link": "https://www.youtube.com/watch?v=vvBYMNXgfVo", "link_text": "觀看 CNBC: Why Costco Gas is So Cheap 影片 (YouTube)"}, {"week": "week3", "class_date": "2026/09/02", "type": "media", "category": "身心健康自學 (BBC Global)", "category_en": "Psychological Benefits of Humming", "title": "哼唱的心理與生理效益 (The Psychological Benefits of Humming - BBC 02:17)", "title_en": "The Psychological Benefits of Humming (BBC Global)", "key_takeaways": "【BBC 科普影音自學摘要】\nBBC Global 探討「哼唱 (Humming)」在神經生物學上的驚人效益：\n1. 迷走神經刺激：哼唱產生的內部震動能刺激迷走神經 (Vagus nerve)，促使副交感神經運作，顯著降低心率與皮質醇壓力。\n2. 提升工作專注度與身心平靜 (Well-being)，在緊湊的高壓商務會議前是非常有效的一分鐘放鬆技巧。", "key_takeaways_en": "Explore how humming stimulates the vagus nerve to reduce stress hormones and enhance mental well-being before high-stakes meetings.", "main_content": "A: Did you know that humming for just two minutes can calm down your nervous system?\nB: Yes, scientific research proves that humming stimulates the vagus nerve, reducing anxiety and promoting mental well-being.", "vocab_notes": ["Humming [ˈhʌmɪŋ] (n.) [生理心理]：哼唱、閉口發出嗡嗡聲。\n  例句：Rhythmic *humming* induces deep physical relaxation prior to public speaking.", "Well-being [ˌwɛlˈbiɪŋ] (n.) [多益常考]：身心健康、福祉。\n  例句：Corporate wellness programs actively promote employee mental *well-being*.", "Blended family (n. phr.) [社會文化延伸]：重組家庭、繼親家庭（夫妻攜帶前次婚姻子女共組的家庭）。\n  例句：Modern insurance policies provide inclusive coverage options for *blended families*.", "Bridesmaid [ˈbraɪdzˌmed] (n.)：伴娘。\n  例句：She served as the chief *bridesmaid* at her sister's wedding.", "Wig [wɪɡ] (n.)：假髮。\n  例句：The theatrical actor wore a powdered *wig* during the historical play."], "vocab_notes_en": ["Humming: Making a low, steady continuous sound like that of a bee with lips closed.", "Well-being: The state of being comfortable, healthy, or happy."], "next_week_tasks": ["💡 課後自學任務：用 1-2 句英文寫下影片心得，說明 Humming 如何幫助降低工作壓力。"], "link": "https://www.youtube.com/watch?v=LCW5Ftg0_uI", "link_text": "觀看 BBC Global: Benefits of Humming 影片 (YouTube)"}];
+        const examData = {"title": "Networking English 全真模擬檢測試卷 (Mid-Term Practice)", "sections": [{"type": "單選題 (Multiple Choice)", "questions": [{"q": "1. Which of the following is grammatically CORRECT when ending a business email?", "options": ["A. I look forward to see you next week.", "B. I look forward to seeing you next week.", "C. I look forward to meet with you.", "D. I am looking forward to meet you."], "ans": "B", "explanation": "Look forward to 中的 to 是介系詞，後方必須搭配動名詞 (seeing)。"}, {"q": "2. In British English, which verb is typically used to mean picking up someone from a station or airport?", "options": ["A. collect", "B. harvest", "C. gather", "D. assemble"], "ans": "A", "explanation": "英式英語常使用 collect someone 來表示接送某人，等同於美式英語的 pick up someone。"}, {"q": "3. When an unexpected emergency arises and you must postpone a client meeting, which phrase is most professional?", "options": ["A. I cancel everything today.", "B. Would it be possible to push our meeting back to Thursday morning?", "C. Take it easy!", "D. Things have been pretty uneventful."], "ans": "B", "explanation": "push back 是商務上推遲、延後會議最得體專業的用語，不帶負面消極色彩。"}]}, {"type": "填空題 (Fill-in-the-Blank)", "questions": [{"q": "4. All our plant safety valves strictly _________ _________ the latest international ISO standards. (符合/遵守法規規範)", "ans": "comply with", "explanation": "comply with 為遵守安全標準之固定搭配片語（介系詞必須接 with，不可接 to）。"}, {"q": "5. That night market stall charges NT$500 for a small bag of fruit; it is a complete _________-_________ and a tourist trap.", "ans": "rip-off", "explanation": "rip-off 為敲竹槓、暴利詐欺的名詞形態。"}]}]};
+        const top5Data = [{"rank": "Top 1 必考核心", "topic": "Look forward to + V-ing 文法與介系詞規則", "prob": "出題機率：99%", "challenge_q": "Q: 請判斷 I look forward to our next meeting 是否正確？為什麼？", "challenge_ans": "✔ 正確！因為 our next meeting 是名詞片語。介系詞 to 後方接動名詞 (V-ing) 或名詞皆完全正確！"}, {"rank": "Top 2 必考核心", "topic": "英美接送用語辨析 (collect someone vs. pick up someone)", "prob": "出題機率：95%", "challenge_q": "Q: 英籍主管說 I need to collect the client at 3 PM 是什麼意思？", "challenge_ans": "✔ 代表他下午 3 點需要去「接客戶」（等同於美式英語的 pick up the client）。"}, {"rank": "Top 3 必考核心", "topic": "法規遵守與相容性 (Comply with / Integrate seamlessly)", "prob": "出題機率：94%", "challenge_q": "Q: 請更正錯誤：The new system complies to environmental laws.", "challenge_ans": "✔ The new system complies with environmental laws. (comply 必須搭配介系詞 with)"}, {"rank": "Top 4 必考核心", "topic": "會議推遲與彈性配合 (Push back / Flexibility)", "prob": "出題機率：91%", "challenge_q": "Q: 如何以商務禮貌用語表達『把會議延後一小時』並感謝對方配合？", "challenge_ans": "✔ Would it be possible to push the meeting back by one hour? Thank you for your flexibility!"}, {"rank": "Top 5 必考核心", "topic": "視訊會議連線障礙排除 (Static / Breaking up / Frozen)", "prob": "出題機率：88%", "challenge_q": "Q: 當通話中對方的聲音斷斷續續且有雜音時，該如何專業提醒？", "challenge_ans": "✔ You are breaking up and there is heavy static on the line. Could you please reconnect?"}];
+
         let filteredPool = [];
         let currentIndex = 0;
         let currentTab = 'sentence';
+        let currentSuiteTool = 'guide';
+        let suiteScope = 'current';
+        let isPenMode = false;
+        
+        let isPodcastPlaying = false;
+        let podcastRate = 0.95;
+        let selectedAccent = 'en-US';
+        let speakerAVoice = null;
+        let speakerBVoice = null;
+
+        const MALE_VOICE_NAMES = ['Daniel', 'Oliver', 'Alex', 'Fred', 'Arthur', 'Rishi', 'Lee', 'David', 'George', 'Guy', 'Tom', 'Aaron', 'James', 'Male'];
+        const FEMALE_VOICE_NAMES = ['Samantha', 'Karen', 'Victoria', 'Moira', 'Fiona', 'Veena', 'Priya', 'Zira', 'Jenny', 'Serena', 'Kate', 'Susan', 'Female'];
+
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false, lastX = 0, lastY = 0, undoStack = [];
+
+        function initVoicesByAccent(accentLang) {
+            if (!('speechSynthesis' in window)) return;
+            const voices = window.speechSynthesis.getVoices();
+            if (!voices.length) return;
+
+            let matchVoices = voices.filter(v => v.lang.toLowerCase().replace('_', '-').startsWith(accentLang.toLowerCase()));
+            if (!matchVoices.length) matchVoices = voices.filter(v => v.lang.startsWith('en'));
+
+            speakerAVoice = matchVoices.find(v => MALE_VOICE_NAMES.some(n => v.name.includes(n))) || matchVoices[0];
+            speakerBVoice = matchVoices.find(v => v !== speakerAVoice && FEMALE_VOICE_NAMES.some(n => v.name.includes(n))) || matchVoices[matchVoices.length - 1] || speakerAVoice;
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => initVoicesByAccent(selectedAccent);
+            initVoicesByAccent(selectedAccent);
+        }
 
         function switchAppMode(mode, btn) {
             document.querySelectorAll('.main-mode-btn').forEach(b => b.classList.remove('active'));
             if (btn) btn.classList.add('active');
             document.getElementById('viewCards').style.display = (mode === 'cards') ? 'block' : 'none';
+            document.getElementById('viewSuite').style.display = (mode === 'suite') ? 'block' : 'none';
             document.getElementById('viewExam').style.display = (mode === 'exam') ? 'block' : 'none';
+
+            if (mode === 'suite') loadSuiteTool(currentSuiteTool);
+            if (mode === 'exam') renderExam();
         }
 
+        function setSuiteScope(scope, btn) {
+            suiteScope = scope;
+            document.querySelectorAll('.suite-scope-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadSuiteTool(currentSuiteTool);
+        }
+
+        function loadSuiteTool(toolName, btn) {
+            currentSuiteTool = toolName;
+            if (btn) {
+                document.querySelectorAll('.suite-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            const panel = document.getElementById('suiteContentPanel');
+            const targetLessons = (suiteScope === 'all') ? rawDatabase : [filteredPool[currentIndex] || rawDatabase[0]];
+
+            if (toolName === 'confusion') {
+                let confusions = [];
+                targetLessons.forEach(l => {
+                    if (l.confusion_fixer) confusions.push(l.confusion_fixer);
+                });
+                if (!confusions.length) {
+                    confusions = [{
+                        analogy: "【生活類比】：介系詞 to 就像接力棒，後面只傳給名詞或動名詞。",
+                        real_example: "I look forward to our meeting tomorrow.",
+                        common_mistake: "錯誤：I look forward to meet you."
+                    }];
+                }
+                panel.innerHTML = `
+                    <h3 style="margin-top:0; color:#1e1b4b;">💡 Confusion Fixer (${suiteScope === 'all' ? '全部課程概念盲點澄清' : '當前概念盲點澄清'})</h3>
+                    ${confusions.map(c => `
+                        <div style="margin-bottom:16px;">
+                            <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:12px; padding:12px; margin-bottom:6px; font-size:14.5px; color:#92400e; font-weight:600;">
+                                ${c.analogy}
+                            </div>
+                            <div style="background:#f0f9ff; border:1px solid #e0f2fe; border-radius:12px; padding:12px; margin-bottom:6px; font-size:14.5px; color:#0369a1; font-weight:600;">
+                                🏢 職場實戰例句：<br>${c.real_example}
+                            </div>
+                            <div style="background:#fef2f2; border:1px solid #fee2e2; border-radius:12px; padding:12px; font-size:14.5px; color:#991b1b; font-weight:600;">
+                                ⚠️ 最易犯錯對比：<br>${c.common_mistake}
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            } else if (toolName === 'guide') {
+                let concepts = [], misconceptions = [], questions = [];
+                targetLessons.forEach(l => {
+                    if (l.instant_guide) {
+                        concepts = concepts.concat(l.instant_guide.core_concepts || []);
+                        misconceptions = misconceptions.concat(l.instant_guide.misconceptions || []);
+                        questions = questions.concat(l.instant_guide.exam_questions || []);
+                    }
+                });
+                panel.innerHTML = `
+                    <h3 style="margin-top:0; color:#1e1b4b;">📖 Instant Study Guide (${suiteScope === 'all' ? '全部課程總覽' : '單週速成'})</h3>
+                    <div style="font-size:14px; font-weight:700; color:#4f46e5; margin-bottom:6px;">🎯 核心概念：</div>
+                    <ul class="vocab-ul">${concepts.map(c => `<li>${c}</li>`).join('')}</ul>
+                    <div style="font-size:14px; font-weight:700; color:#b45309; margin:12px 0 6px 0;">⚠️ 常見誤解：</div>
+                    <ul class="vocab-ul">${misconceptions.map(m => `<li>${m}</li>`).join('')}</ul>
+                    <div style="font-size:14px; font-weight:700; color:#047857; margin:12px 0 6px 0;">✍️ 實戰自測題：</div>
+                    <ul class="vocab-ul">${questions.map(q => `<li>${q}</li>`).join('')}</ul>
+                `;
+            } else if (toolName === 'socratic') {
+                let sqList = [];
+                targetLessons.forEach(l => {
+                    if (l.socratic_quiz) sqList = sqList.concat(l.socratic_quiz);
+                });
+                panel.innerHTML = `
+                    <h3 style="margin-top:0; color:#1e1b4b;">🏛️ Socratic Quiz (${suiteScope === 'all' ? '跨週階梯提問' : '當前主題提問'})</h3>
+                    ${sqList.map(q => `
+                        <div style="background:#faf5ff; border:1px solid #e9d5ff; border-radius:14px; padding:12px; margin-bottom:10px;">
+                            <div style="font-weight:800; color:#6b21a8; font-size:14px;">${q.level}</div>
+                            <div style="font-size:15px; margin:6px 0; font-weight:600; color:#1e1b4b;">${q.prompt}</div>
+                            <button class="quiz-toggle-btn" style="padding:4px 10px; font-size:12px;" onclick="this.nextElementSibling.style.display = (this.nextElementSibling.style.display==='block'?'none':'block')">
+                                💡 查看蘇格拉底啟發引導
+                            </button>
+                            <div style="display:none; margin-top:8px; font-size:14px; color:#15803d; line-height:1.5; font-weight:600;">
+                                ${q.feedback}
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            } else if (toolName === 'gap') {
+                let gapList = [];
+                targetLessons.forEach(l => {
+                    if (l.gap_finder) gapList = gapList.concat(l.gap_finder);
+                });
+                panel.innerHTML = `
+                    <h3 style="margin-top:0; color:#1e1b4b;">🔍 Gap Finder (${suiteScope === 'all' ? '全部課程弱點診斷' : '單週弱點診斷'})</h3>
+                    <div style="font-size:14.5px; color:#475569; line-height:1.6; font-weight:600;">
+                        系統比對分析後，發現以下容易被忽略的實戰盲點：
+                    </div>
+                    <ul class="vocab-ul" style="margin-top:8px;">${gapList.map(g => `<li>${g}</li>`).join('')}</ul>
+                `;
+            } else if (toolName === 'forecaster') {
+                panel.innerHTML = `
+                    <h3 style="margin-top:0; color:#1e1b4b;">🎯 Exam Forecaster (高頻考點 Top 5 預測)</h3>
+                    ${top5Data.map(t => `
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px; margin-bottom:8px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-weight:800; color:#4f46e5;">${t.rank}</span>
+                                <span style="background:#dcfce7; color:#166534; font-size:12px; font-weight:700; padding:2px 8px; border-radius:8px;">${t.prob}</span>
+                            </div>
+                            <div style="font-weight:700; margin:6px 0; color:#1e1b4b;">${t.topic}</div>
+                            <div style="font-size:14px; color:#475569;">${t.challenge_q}</div>
+                            <div style="margin-top:6px; font-size:14px; color:#166534; font-weight:600;">${t.challenge_ans}</div>
+                        </div>
+                    `).join('')}
+                `;
+            } else if (toolName === 'podcast') {
+                panel.innerHTML = `
+                    <div class="podcast-box">
+                        <h3 style="color:#fff; margin:0 0 6px 0;">🎙️ Audio Study Partner (自然男女雙人聲)</h3>
+                        <div style="font-size:13px; color:#c7d2fe; margin-bottom:10px;">👨 Speaker A (男聲) • 👩 Speaker B (女聲)</div>
+                        <div class="podcast-controls">
+                            <div class="control-row" style="margin-bottom:8px;">
+                                <span>🗣️ 示範腔調:</span>
+                                <select class="accent-select" onchange="selectedAccent=this.value; initVoicesByAccent(this.value);">
+                                    <option value="en-US">🇺🇸 美式英語 (US)</option>
+                                    <option value="en-GB">🇬🇧 英式英語 (UK)</option>
+                                    <option value="en-AU">🇦🇺 澳式英語 (AU)</option>
+                                    <option value="en-IN">🇮🇳 印度英語 (IN)</option>
+                                </select>
+                            </div>
+                            <div class="control-row">
+                                <span>⚡ 語速調節 Speed:</span>
+                                <input type="range" min="0.5" max="2.0" step="0.1" value="${podcastRate}" class="speed-slider" oninput="podcastRate=parseFloat(this.value); document.getElementById('spVal').innerText=this.value+'x';">
+                                <span id="spVal" style="color:#86efac; min-width:40px;">${podcastRate}x</span>
+                            </div>
+                        </div>
+                        <button id="podcastMainBtn" class="podcast-play-btn" onclick="togglePodcastPlayback()">
+                            ${isPodcastPlaying ? '⏹️ 停止播放' : '▶️ 開始雙人對話朗讀'}
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        let speechQueue = [], queueIndex = 0;
+        function togglePodcastPlayback() {
+            if (!('speechSynthesis' in window)) return;
+            const btn = document.getElementById('podcastMainBtn');
+
+            if (isPodcastPlaying) {
+                window.speechSynthesis.cancel();
+                isPodcastPlaying = false;
+                if (btn) btn.innerText = "▶️ 開始雙人對話朗讀";
+            } else {
+                window.speechSynthesis.cancel();
+                speechQueue = [];
+                queueIndex = 0;
+
+                const target = (suiteScope === 'all') ? rawDatabase : [filteredPool[currentIndex] || rawDatabase[0]];
+                target.forEach(l => {
+                    const lines = l.main_content.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+                    lines.forEach(line => {
+                        if (line.startsWith('A:')) speechQueue.push({ speaker: 'A', text: line.substring(2).trim() });
+                        else if (line.startsWith('B:')) speechQueue.push({ speaker: 'B', text: line.substring(2).trim() });
+                        else speechQueue.push({ speaker: 'narrator', text: line.replace(/[•-]/g, '').trim() });
+                    });
+                });
+
+                if (!speechQueue.length) return;
+                isPodcastPlaying = true;
+                if (btn) btn.innerText = "⏹️ 停止播放";
+                playNextInQueue();
+            }
+        }
+
+        function playNextInQueue() {
+            if (!isPodcastPlaying || queueIndex >= speechQueue.length) {
+                isPodcastPlaying = false;
+                const btn = document.getElementById('podcastMainBtn');
+                if (btn) btn.innerText = "▶️ 開始雙人對話朗讀";
+                return;
+            }
+
+            const item = speechQueue[queueIndex];
+            const utter = new SpeechSynthesisUtterance(item.text);
+            utter.rate = podcastRate;
+
+            if (item.speaker === 'A') {
+                if (speakerAVoice) utter.voice = speakerAVoice;
+                utter.pitch = 0.82;
+            } else if (item.speaker === 'B') {
+                if (speakerBVoice) utter.voice = speakerBVoice;
+                utter.pitch = 1.22;
+            } else {
+                if (speakerBVoice) utter.voice = speakerBVoice;
+                utter.pitch = 1.0;
+            }
+
+            utter.onend = () => { queueIndex++; setTimeout(playNextInQueue, 160); };
+            utter.onerror = () => { isPodcastPlaying = false; };
+            window.speechSynthesis.speak(utter);
+        }
+
+        function renderExam() {
+            const container = document.getElementById('examContainer');
+            container.innerHTML = "";
+            examData.sections.forEach(sec => {
+                const secDiv = document.createElement('div');
+                secDiv.innerHTML = `<h4 style="color:#4f46e5; margin:14px 0 8px 0;">${sec.type}</h4>`;
+                sec.questions.forEach(q => {
+                    let optionsHtml = '';
+                    if (q.options) {
+                        optionsHtml = `<div style="margin:8px 0;">${q.options.map(o => `<div style="font-size:14.5px; margin:4px 0; color:#334155;">${o}</div>`).join('')}</div>`;
+                    }
+                    secDiv.innerHTML += `
+                        <div class="exam-q-card" style="background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:12px; margin-bottom:10px;">
+                            <div style="font-weight:700; color:#1e1b4b;">${q.q}</div>
+                            ${optionsHtml}
+                            <button class="quiz-toggle-btn" style="padding:6px 12px; font-size:12.5px; margin-top:8px;" onclick="this.nextElementSibling.style.display = (this.nextElementSibling.style.display==='block'?'none':'block')">
+                                👁️ 顯示解答與詳解
+                            </button>
+                            <div style="display:none; margin-top:8px; padding:10px; background:#f0fdf4; border-radius:10px; color:#166534; font-weight:600;">
+                                答案：${q.ans}<br>解析：${q.explanation}
+                            </div>
+                        </div>
+                    `;
+                });
+                container.appendChild(secDiv);
+            });
+        }
+
+        function renderMainContent(rawContent) {
+            const container = document.getElementById('mainContentContainer');
+            container.innerHTML = "";
+            if (!rawContent) return;
+
+            const lines = String(rawContent).split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            const hasDialogue = lines.some(l => l.startsWith('A:') || l.startsWith('B:'));
+
+            if (hasDialogue) {
+                const dialogueBox = document.createElement('div');
+                dialogueBox.className = 'dialogue-container';
+                lines.forEach(line => {
+                    if (line.startsWith('A:')) {
+                        dialogueBox.innerHTML += `
+                            <div class="chat-bubble-row speaker-a">
+                                <div class="speaker-avatar avatar-a">A</div>
+                                <div class="chat-bubble-content">${line.substring(2).trim()}</div>
+                            </div>`;
+                    } else if (line.startsWith('B:')) {
+                        dialogueBox.innerHTML += `
+                            <div class="chat-bubble-row speaker-b">
+                                <div class="speaker-avatar avatar-b">B</div>
+                                <div class="chat-bubble-content">${line.substring(2).trim()}</div>
+                            </div>`;
+                    } else {
+                        dialogueBox.innerHTML += `<div style="font-size:14px; font-weight:700; color:#64748b; margin:4px 0;">${line}</div>`;
+                    }
+                });
+                container.appendChild(dialogueBox);
+            } else {
+                const plain = document.createElement('div');
+                plain.style.background = 'var(--sky-bg)';
+                plain.style.padding = '14px';
+                plain.style.borderRadius = '14px';
+                plain.style.whiteSpace = 'pre-line';
+                plain.innerText = rawContent;
+                container.appendChild(plain);
+            }
+        }
+
+        function formatVocabItem(rawText) {
+            let text = String(rawText);
+            text = text.replace(/\[([^\]]+)\]/g, '<span class="ipa-tag">[$1]</span>');
+            text = text.replace(/\*([^*]+)\*/g, '<span class="highlight-term">$1</span>');
+            return text.replace(/\n/g, '<br>');
+        }
+
+        function formatQuestionText(text) {
+            let s = String(text);
+            s = s.replace(/_{3,}/g, '<span class="blank-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>');
+            return s;
+        }
+
+        function toggleAnswer(btn) {
+            const wrapper = btn.nextElementSibling;
+            if (wrapper.style.display === 'block') {
+                wrapper.style.display = 'none';
+                btn.innerText = '👁️ 顯示參考答案與示範';
+            } else {
+                wrapper.style.display = 'block';
+                btn.innerText = '🙈 隱藏解答';
+            }
+        }
+
+        // ==================== 整合課程日期至選單 ====================
         function initWeekOptions() {
             const selector = document.getElementById('weekFilter');
             selector.innerHTML = "";
-            const weekMap = {};
-            rawDatabase.forEach(item => {
-                if (item.week && !weekMap[item.week]) {
-                    weekMap[item.week] = item.class_date || "2026";
-                }
-            });
+            const weekDateMap = {
+                'week1': '2026/08/12',
+                'week2': '2026/08/19',
+                'week3': '2026/09/02'
+            };
 
-            Object.keys(weekMap).sort().forEach(w => {
+            const weeks = ['week1', 'week2', 'week3'];
+            weeks.forEach(w => {
                 const opt = document.createElement('option');
                 opt.value = w;
-                opt.innerText = w.toUpperCase();
+                opt.innerText = `${w.toUpperCase()} (${weekDateMap[w]})`;
                 selector.appendChild(opt);
             });
         }
 
         function setTab(tabName) {
             currentTab = tabName;
-            document.getElementById('tabSentence').classList.toggle('active', tabName === 'sentence');
-            document.getElementById('tabMedia').classList.toggle('active', tabName === 'media');
+            updateTabButtonsUI();
             applyFilters();
+        }
+
+        function updateTabButtonsUI() {
+            const btnSentence = document.getElementById('tabSentence');
+            const btnMedia = document.getElementById('tabMedia');
+            if (currentTab === 'sentence') {
+                btnSentence.classList.add('active');
+                btnMedia.classList.remove('active');
+            } else {
+                btnMedia.classList.add('active');
+                btnSentence.classList.remove('active');
+            }
         }
 
         function applyFilters() {
@@ -217,18 +675,26 @@
             cardEl.scrollTop = 0;
 
             if (!filteredPool.length) {
-                document.getElementById('categoryBadge').innerText = "無資料";
+                document.getElementById('categoryBadge').innerText = (currentTab === 'media') ? "影音 / 自習" : "句型 / 文法";
+                document.getElementById('categoryBadge').className = (currentTab === 'media') ? "badge media-badge" : "badge";
+                document.getElementById('dateDisplay').innerText = "";
                 document.getElementById('titleDisplay').innerText = "本分類尚無資料";
                 document.getElementById('takeawaysSection').style.display = "none";
                 document.getElementById('mainContentSection').style.display = "none";
+                document.getElementById('quizSection').style.display = "none";
                 document.getElementById('vocabSection').style.display = "none";
+                document.getElementById('taskSection').style.display = "none";
                 document.getElementById('linkSection').style.display = "none";
                 document.getElementById('counterDisplay').innerText = "0 / 0";
                 return;
             }
 
             const item = filteredPool[currentIndex];
-            document.getElementById('categoryBadge').innerText = item.category || "教材";
+            const badge = document.getElementById('categoryBadge');
+            badge.innerText = item.category || "教材";
+            badge.className = (item.type === 'media') ? "badge media-badge" : "badge";
+
+            document.getElementById('dateDisplay').innerText = item.class_date ? ` • ${item.class_date}` : '';
             document.getElementById('counterDisplay').innerText = `${currentIndex + 1} / ${filteredPool.length}`;
             document.getElementById('titleDisplay').innerText = item.title || "";
 
@@ -241,7 +707,28 @@
             }
 
             document.getElementById('mainContentSection').style.display = "block";
-            document.getElementById('mainContentContainer').innerText = item.main_content;
+            renderMainContent(item.main_content);
+
+            const quizSection = document.getElementById('quizSection');
+            const quizContainer = document.getElementById('quizContainer');
+            quizContainer.innerHTML = "";
+            if (item.practice_quiz && item.practice_quiz.length > 0) {
+                quizSection.style.display = "block";
+                item.practice_quiz.forEach(q => {
+                    const qCard = document.createElement('div');
+                    qCard.className = 'quiz-card';
+                    qCard.innerHTML = `
+                        <div class="quiz-q">${formatQuestionText(q.question)}</div>
+                        <button class="quiz-toggle-btn" onclick="toggleAnswer(this)">👁️ 顯示參考答案與示範</button>
+                        <div class="quiz-ans-wrapper">
+                            <div class="quiz-ans-box">${q.answer}</div>
+                        </div>
+                    `;
+                    quizContainer.appendChild(qCard);
+                });
+            } else {
+                quizSection.style.display = "none";
+            }
 
             const vbSection = document.getElementById('vocabSection');
             const vocabUl = document.getElementById('vocabDisplay');
@@ -250,11 +737,20 @@
                 vbSection.style.display = "block";
                 item.vocab_notes.forEach(note => {
                     const li = document.createElement('li');
-                    li.innerText = note;
+                    li.innerHTML = formatVocabItem(note);
                     vocabUl.appendChild(li);
                 });
             } else {
                 vbSection.style.display = "none";
+            }
+
+            const taskSection = document.getElementById('taskSection');
+            const taskContainer = document.getElementById('taskContainer');
+            if (item.next_week_tasks && item.next_week_tasks.length > 0) {
+                taskSection.style.display = "block";
+                taskContainer.innerText = item.next_week_tasks.join('\n\n');
+            } else {
+                taskSection.style.display = "none";
             }
 
             const linkSection = document.getElementById('linkSection');
@@ -262,7 +758,7 @@
             if (item.link) {
                 linkSection.style.display = "block";
                 linkTag.href = item.link;
-                linkTag.innerText = "🔗 " + (item.link_text || "開啟連結");
+                linkTag.innerText = "🔗 " + (item.link_text || "開啟延伸學習資源");
             } else {
                 linkSection.style.display = "none";
             }
@@ -274,8 +770,18 @@
             renderCard();
         }
 
+        function togglePenMode() {
+            isPenMode = !isPenMode;
+            document.getElementById('penBtn').classList.toggle('active-pen', isPenMode);
+            document.getElementById('cardElement').classList.toggle('canvas-active', isPenMode);
+        }
+
+        function clearAllCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+        function undoLastStroke() { clearAllCanvas(); }
+
         window.onload = () => {
             initWeekOptions();
+            updateTabButtonsUI();
             applyFilters();
         };
     </script>
