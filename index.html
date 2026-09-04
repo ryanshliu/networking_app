@@ -691,11 +691,19 @@
             const selector = document.getElementById('weekFilter');
             const selectedWeek = (selector && selector.value) ? selector.value : 'week1';
 
+            // 強制容錯過濾：若找不到剛好符合 type 的項目，則放寬條件顯示該週所有項目
             filteredPool = rawDatabaseFull.filter(item => {
                 const wMatch = String(item.week).trim().toLowerCase() === String(selectedWeek).trim().toLowerCase();
                 const tMatch = String(item.type).trim().toLowerCase() === String(currentTab).trim().toLowerCase();
                 return wMatch && tMatch;
             });
+
+            if (!filteredPool.length) {
+                filteredPool = rawDatabaseFull.filter(item => {
+                    return String(item.week).trim().toLowerCase() === String(selectedWeek).trim().toLowerCase();
+                });
+            }
+
             currentIndex = 0;
             renderCard();
         }
