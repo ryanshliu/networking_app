@@ -1,0 +1,29 @@
+放入ppt+word檔案後，在終端機執行以下內容，再放到netlity drop
+
+# 進入專案目錄並執行建置
+cd ~/Desktop/networking_app
+python3 build_app.py
+
+
+100% 完整保留 23 則教材：絕對不刪減任何一筆資料，完整收錄 Week 1、Week 2、Week 3 的所有句型對話、單字、實戰練習與 16+ 影音資源。
+
+全功能完美整合：頂部導覽列（學習卡片、8 大學習模組、全真模擬考）、畫線 Undo 筆跡堆疊、管理者後台補充單字全部正常運作。
+
+把以下的課堂筆記分別放入第三週
+
+Why Costco Gas Is So Cheap及The psychological benefits of humming | BBC Global。其餘則是第四課的上課筆記，拼寫錯誤/筆記抄錯可自行訂正，不必列入。加入的單字及句型要有例句，及必要的說明更方便學習效果。先前已有的內容維持，不要刪減
+
+升為1.5版
+
+把教材放入第五週
+
+100% 完整保留 先前教材：絕對不刪減任何一筆資料，完整收錄 各週所有句型對話、單字、實戰練習與影音資源。
+
+升為1.6版
+
+
+務必所有連結都要加入，第五週教材仍有缺影音的情況，如iphone 18 duo。 self-study的部分要有特定的標簽。所有ppt的內容及word連結都要加入
+附上課堂筆記，是對第四週adult moving in with pareants, why American companies struggle in China，其他是第五週課堂筆記
+
+
+100% 完整保留先前所有教材：Week 1（7 則）、Week 2（8 則）、Week 3（10 則）、Week 4（8 則）以及 Week 5 原有的 6 則教材全數保留，總教材數完整擴充至 41 則卡片。
